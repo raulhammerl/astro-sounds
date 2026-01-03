@@ -5,7 +5,6 @@ const { slug } = Astro.props;
 const availableEmojis = ['🔥', '🔊', '💿', '👯', '💎', '🥧', '🥰', '😬', '😵‍💫', '🤯', '🤣', '👍'];
 
 // --- 1. Server-Side Data Fetching ---
-// Fetch all raw reactions for this specific post
 let { data: rawReactions, error } = await supabase
   .from('reactions')
   .select('emoji, username')
@@ -17,7 +16,6 @@ if (error) {
 }
 
 // --- 2. Data Transformation ---
-// Group the raw rows by emoji: { "🔥": ["JONAS", "RAUL"], "💿": ["SARAH"] }
 const groupedReactions = (rawReactions || []).reduce((acc, curr) => {
   if (!acc[curr.emoji]) {
     acc[curr.emoji] = [];
@@ -26,7 +24,6 @@ const groupedReactions = (rawReactions || []).reduce((acc, curr) => {
   return acc;
 }, {});
 
-// Convert back to an array for mapping in JSX
 const existingReactionEntries = Object.entries(groupedReactions);
 ---
 
@@ -36,7 +33,8 @@ const existingReactionEntries = Object.entries(groupedReactions);
     
     <div class="reaction-list">
       {existingReactionEntries.map(([emoji, names]) => (
-        <div class="reaction-item" tabindex="0">
+        /* ADDED: data-emoji-type={emoji} so JS can find it */
+        <div class="reaction-item" tabindex="0" data-emoji-type={emoji}>
           <div class="reaction-badge">
             <span class="emoji">{emoji}</span> 
             <span class="count">{names.length.toString().padStart(2, '0')}</span>
@@ -60,101 +58,31 @@ const existingReactionEntries = Object.entries(groupedReactions);
         </div>
       </div>
     </div>
-
   </div>
 </div>
 
+<template id="reaction-template">
+  <div class="reaction-item" tabindex="0" data-emoji-type="">
+    <div class="reaction-badge">
+      <span class="emoji"></span> 
+      <span class="count">01</span>
+    </div>
+    <div class="name-tooltip"></div>
+  </div>
+</template>
+
 <style>
-  /* --- General Layout --- */
-  .reaction-wrapper {
-    margin: 1rem 0;
-    font-family: var(--font-mono);
-    font-size: 0.8rem;
-    display: flex;
-    justify-content: center;
-  }
-
-  .active-reactions {
-    display: flex;
-    align-items: center;
-    gap: 0.6rem;
-    flex-wrap: wrap;
-    justify-content: center;
-  }
-
-  .prefix {
-    color: #888;
-    font-weight: 800;
-    font-size: 0.75rem;
-  }
-
-  .reaction-list {
-    display: flex;
-    gap: 0.5rem;
-    align-items: center;
-  }
-
-  /* --- Existing Reaction Item & Tooltip --- */
-  .reaction-item {
-    position: relative;
-    cursor: help; /* Indicates tooltip info */
-  }
-
-  .reaction-badge {
-    border: 1px solid #bcbcbc;
-    display: flex;
-    gap: 4px;
-    padding: 1px 5px;
-    font-size: 0.75rem;
-    color: #666;
-    background: #fff;
-    align-items: center;
-  }
-
-  .reaction-badge .emoji {
-    font-size: 0.9rem;
-    filter: grayscale(100%);
-    transition: filter 0.2s ease;
-  }
-  
-  /* Hover state for existing badge */
-  .reaction-item:hover .reaction-badge {
-    border-color: #000;
-    color: #000;
-  }
-  
-  .reaction-item:hover .emoji {
-    filter: grayscale(0%);
-  }
-
-  /* The Tooltip Box */
-  .name-tooltip {
-    position: absolute;
-    bottom: 130%; /* Position above */
-    left: 50%;
-    transform: translateX(-50%);
-    background: #000;
-    color: #fff;
-    padding: 3px 6px;
-    font-size: 0.65rem;
-    white-space: nowrap;
-    font-weight: 700;
-    /* Hidden by default */
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.1s ease, visibility 0.1s ease;
-    z-index: 20;
-    pointer-events: none; /* Prevents tooltip from interfering with mouse */
-  }
-  
-  /* Show Tooltip on Hover (and Focus for accessibility) */
-  .reaction-item:hover .name-tooltip,
-  .reaction-item:focus .name-tooltip {
-    opacity: 1;
-    visibility: visible;
-  }
-
-  /* --- Add Menu (Reused from previous iteration) --- */
+  .reaction-wrapper { margin: 1rem 0; font-family: var(--font-mono); font-size: 0.8rem; display: flex; justify-content: center; }
+  .active-reactions { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; justify-content: center; }
+  .prefix { color: #888; font-weight: 800; font-size: 0.75rem; }
+  .reaction-list { display: flex; gap: 0.5rem; align-items: center; }
+  .reaction-item { position: relative; cursor: help; }
+  .reaction-badge { border: 1px solid #bcbcbc; display: flex; gap: 4px; padding: 1px 5px; font-size: 0.75rem; color: #666; background: #fff; align-items: center; }
+  .reaction-badge .emoji { font-size: 0.9rem; filter: grayscale(100%); transition: filter 0.2s ease; }
+  .reaction-item:hover .reaction-badge { border-color: #000; color: #000; }
+  .reaction-item:hover .emoji { filter: grayscale(0%); }
+  .name-tooltip { position: absolute; bottom: 130%; left: 50%; transform: translateX(-50%); background: #000; color: #fff; padding: 3px 6px; font-size: 0.65rem; white-space: nowrap; font-weight: 700; opacity: 0; visibility: hidden; transition: opacity 0.1s ease, visibility 0.1s ease; z-index: 20; pointer-events: none; }
+  .reaction-item:hover .name-tooltip, .reaction-item:focus .name-tooltip { opacity: 1; visibility: visible; }
   .add-reaction-container { position: relative; padding: 10px 0; margin: -10px 0; }
   .add-btn { background: transparent; border: none; cursor: pointer; color: #bcbcbc; font-weight: 800; font-family: var(--font-mono); padding: 0 4px;}
   .add-btn:hover { color: #000; }
@@ -171,54 +99,67 @@ const existingReactionEntries = Object.entries(groupedReactions);
 
   function initReactions() {
     const modules = document.querySelectorAll('.reaction-wrapper');
+    const template = document.getElementById('reaction-template');
 
     modules.forEach(module => {
       const slug = module.getAttribute('data-slug');
       const menuItems = module.querySelectorAll('.menu-item');
+      const reactionList = module.querySelector('.reaction-list');
 
       menuItems.forEach(item => {
-        // Remove old listeners to prevent duplicates on View Transitions
         const newItem = item.cloneNode(true);
         item.parentNode.replaceChild(newItem, item);
 
         newItem.addEventListener('click', async (e) => {
           e.stopPropagation();
-          
-          // 1. Get Identity
           const username = promptForIdentity();
-          if (!username) return; // User cancelled prompt
+          if (!username) return;
 
           const emoji = newItem.getAttribute('data-emoji');
-          
-          // 2. Optimistic UI Update (Optional but makes it feel fast)
-          // We could manually add the element here, but reloading is safer for consistency.
-          newItem.style.opacity = '0.5'; // Visual feedback that something is happening
+          newItem.style.opacity = '0.5';
 
-          // 3. Send to Supabase
           const { error } = await supabase
             .from('reactions')
             .insert([{ slug, emoji, username }]);
 
           if (error) {
-             // Error 23505 is a unique constraint violation (user already reacted)
-             if(error.code !== '23505') {
-                console.error('Error adding reaction:', error);
-                alert("SYSTEM_ERROR: Could not save reaction.");
-             }
-             newItem.style.opacity = '1'; // Reset UI on error/duplicate
+            if(error.code !== '23505') {
+              console.error('Database Error:', error);
+              alert("SYSTEM_ERROR: Could not save reaction.");
+            }
+            newItem.style.opacity = '1';
           } else {
-            // 4. Success! Reload to fetch new data from server
-            // Using location.replace to avoid adding to history stack
-            window.location.replace(window.location.href);
+            newItem.style.opacity = '1';
+            let existingBadge = module.querySelector(`.reaction-item[data-emoji-type="${emoji}"]`);
+
+            if (existingBadge) {
+              const countEl = existingBadge.querySelector('.count');
+              const currentCount = parseInt(countEl.textContent || "0");
+              countEl.textContent = (currentCount + 1).toString().padStart(2, '0');
+              const tooltipEl = existingBadge.querySelector('.name-tooltip');
+              if (tooltipEl) {
+                tooltipEl.textContent += `, ${username}`;
+              }
+            } else if (template && reactionList) {
+              const clone = template.content.cloneNode(true);
+              const itemEl = clone.querySelector('.reaction-item');
+              const emojiEl = clone.querySelector('.emoji');
+              const countEl = clone.querySelector('.count');
+              const tooltipEl = clone.querySelector('.name-tooltip');
+
+              itemEl.setAttribute('data-emoji-type', emoji);
+              emojiEl.textContent = emoji;
+              countEl.textContent = '01';
+              tooltipEl.textContent = username;
+
+              reactionList.appendChild(clone);
+            }
           }
         });
       });
     });
   }
 
-  // Initialize on load
   initReactions();
-  
-  // Re-init if using Astro View Transitions later
   document.addEventListener('astro:after-swap', initReactions);
 </script>
