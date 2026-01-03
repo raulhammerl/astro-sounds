@@ -1,59 +1,91 @@
 ---
 import EmojiReactions from './EmojiReactions.astro';
 import Comments from './Comments.astro';
-const { post } = Astro.props;
-const { title, pubDate, author, youtubeId } = post.data;
 
-// Fetch the high-quality thumbnail from YouTube's servers
+const { post } = Astro.props;
+
+// 1. Data mapping from Supabase object
+// (Replacing post.data with the direct database columns)
+const { artist, title, youtube_url, description, posted_by, created_at, slug } = post;
+
+// 2. Helper to get the 11-character YouTube ID from a full URL
+const getYoutubeId = (url) => {
+  if (!url) return null;
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+  const match = url.match(regExp);
+  return (match && match[2].length === 11) ? match[2] : null;
+};
+
+const youtubeId = getYoutubeId(youtube_url);
 const thumbnailUrl = `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`;
+
+// 3. Format the Supabase timestamp for the meta display
+const formattedDate = created_at 
+  ? new Date(created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+  : 'RECENT';
 ---
 
 <article class="cell">
   <div class="post-meta">
-    {pubDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })} 
-    &nbsp; {author}
+    {formattedDate} &nbsp; {posted_by}
   </div>
   
-  <a class="post-link" href={`/posts/${post.slug}`}>
-    {title}
-  </a>
+  <div class="post-title-container">
+     <span class="artist">{artist}</span>
+     <span class="divider"> // </span>
+     <span class="track-title">{title}</span>
+  </div>
 
   {youtubeId && (
-    <div class="video-placeholder" data-id={youtubeId} data-title={title}>
+    <div class="video-placeholder" data-id={youtubeId} data-title={`${artist} - ${title}`}>
       <img src={thumbnailUrl} alt={title} loading="lazy" />
       <div class="play-button">▶</div>
     </div>
   )}
 
-  <EmojiReactions slug={post.slug} />
+  {description && <p class="post-description">{description}</p>}
 
-  <Comments slug={post.slug} />
+  <EmojiReactions slug={slug} />
+  <Comments slug={slug} />
 
 </article>
 
 <script>
   // Handles the "Lite YouTube" logic: Swap thumbnail for iframe on click
-  const placeholders = document.querySelectorAll('.video-placeholder');
+  function initVideoPlaceholders() {
+    const placeholders = document.querySelectorAll('.video-placeholder');
 
-  placeholders.forEach(wrapper => {
-    wrapper.addEventListener('click', () => {
-      const id = wrapper.getAttribute('data-id');
-      const title = wrapper.getAttribute('data-title');
-      
-      const iframe = document.createElement('iframe');
-      iframe.setAttribute('src', `https://www.youtube.com/embed/${id}?autoplay=1`);
-      iframe.setAttribute('title', title || 'Video');
-      iframe.setAttribute('frameborder', '0');
-      iframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture');
-      iframe.setAttribute('allowfullscreen', 'true');
-      
-      wrapper.innerHTML = '';
-      wrapper.appendChild(iframe);
+    placeholders.forEach(wrapper => {
+      // Check if it already has an iframe to prevent double-binding
+      if (wrapper.querySelector('iframe')) return;
+
+      wrapper.addEventListener('click', () => {
+        const id = wrapper.getAttribute('data-id');
+        const title = wrapper.getAttribute('data-title');
+        
+        const iframe = document.createElement('iframe');
+        iframe.setAttribute('src', `https://www.youtube.com/embed/${id}?autoplay=1`);
+        iframe.setAttribute('title', title || 'Video');
+        iframe.setAttribute('frameborder', '0');
+        iframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture');
+        iframe.setAttribute('allowfullscreen', 'true');
+        
+        wrapper.innerHTML = '';
+        wrapper.appendChild(iframe);
+      });
     });
-  });
+  }
+
+  // Initial load
+  initVideoPlaceholders();
+  // Ensure it works after navigation if you use View Transitions
+  document.addEventListener('astro:after-swap', initVideoPlaceholders);
 </script>
 
 <style>
+  /* STYLING: Kept your original "cell" design and added 
+     the artist/title split formatting 
+  */
   .cell {
     display: flex;
     flex-direction: column;
@@ -61,6 +93,7 @@ const thumbnailUrl = `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`;
     text-align: center;
     margin-bottom: 5rem; 
     padding-bottom: 2rem;
+    width: 100%;
   }
 
   .post-meta {
@@ -71,9 +104,10 @@ const thumbnailUrl = `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`;
     padding: 2px 8px;
     text-transform: uppercase;
     font-weight: 700;
+    font-family: var(--font-mono);
   }
 
-  .post-link {
+  .post-title-container {
     font-size: 1.5rem;
     font-weight: 800;
     text-decoration: none;
@@ -81,6 +115,19 @@ const thumbnailUrl = `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`;
     text-transform: uppercase;
     margin-bottom: 1.5rem;
     line-height: 1.2;
+    font-family: var(--font-mono);
+  }
+
+  .artist { color: #000; }
+  .divider { color: #bcbcbc; font-weight: 400; }
+  .track-title { color: #666; }
+
+  .post-description {
+    margin-top: 1.5rem;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    max-width: 650px;
+    color: #333;
   }
 
   .video-placeholder {
