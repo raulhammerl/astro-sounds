@@ -4,7 +4,6 @@ import { supabase } from '../lib/supabase';
 const { slug } = Astro.props;
 
 // --- 1. Server-Side Fetch ---
-// Get all comments for this post from Supabase
 let { data: comments, error } = await supabase
   .from('comments')
   .select('username, content, created_at')
@@ -16,7 +15,6 @@ if (error) {
   comments = [];
 }
 
-// Helper to format timestamps for that "log" look
 const formatTimestamp = (dateString) => {
   const date = new Date(dateString);
   return date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
@@ -55,38 +53,28 @@ const formatTimestamp = (dateString) => {
   </div>
 </div>
 
+<template id="comment-template">
+  <div class="comment-entry">
+    <div class="comment-meta"></div>
+    <p class="comment-body"></p>
+  </div>
+</template>
+
 <style>
-  .comments-section {
-    margin-top: 1.5rem;
-    width: 100%;
-    text-align: left;
-    font-family: var(--font-mono);
-  }
-
+  .comments-section { margin-top: 1.5rem; width: 100%; text-align: left; font-family: var(--font-mono); }
   .comment-feed { margin: 1.5rem 0; display: flex; flex-direction: column; gap: 1.2rem; }
-  
   .comment-entry { border-left: 1px solid #bcbcbc; padding-left: 1rem; }
-  
   .comment-meta { font-size: 0.65rem; font-weight: 700; color: #888; text-transform: uppercase; margin-bottom: 0.2rem; }
-  
   .comment-body { font-size: 0.85rem; color: #333; margin: 0; line-height: 1.4; }
-
   .no-comments { font-size: 0.7rem; color: #bcbcbc; font-style: italic; }
-
   .cmd-btn { background: transparent; border: none; font-family: var(--font-mono); font-size: 0.8rem; font-weight: 700; cursor: pointer; color: #bcbcbc; padding: 0; }
   .cmd-btn:hover { color: #000; text-decoration: underline; }
-
   .comment-form-container { margin-top: 1.5rem; border: 1px solid #bcbcbc; padding: 1rem; background: #fafafa; }
   .comment-form-container.hidden { display: none !important; }
-
   .input-header { font-size: 0.7rem; font-weight: 800; color: #666; margin-bottom: 0.5rem; }
-  
   textarea { width: 100%; background: #fff; border: 1px solid #bcbcbc; font-family: var(--font-mono); padding: 0.5rem; font-size: 0.85rem; outline: none; resize: vertical; }
-
   .form-footer { display: flex; justify-content: space-between; margin-top: 0.5rem; gap: 1rem; }
-  
   .name-input { background: transparent; border: none; border-bottom: 1px solid #bcbcbc; font-family: var(--font-mono); font-size: 0.8rem; flex-grow: 1; outline: none; }
-
   .submit-comment-btn { background: transparent; border: none; font-family: var(--font-mono); font-weight: 800; cursor: pointer; color: #000; }
   .submit-comment-btn:hover { background: #000; color: #fff; }
 </style>
@@ -97,6 +85,7 @@ const formatTimestamp = (dateString) => {
 
   function initComments() {
     const sections = document.querySelectorAll('.comments-section');
+    const template = document.getElementById('comment-template');
 
     sections.forEach(section => {
       const slug = section.getAttribute('data-slug');
@@ -105,14 +94,11 @@ const formatTimestamp = (dateString) => {
       const submitBtn = section.querySelector('.submit-comment-btn');
       const nameInput = section.querySelector('.comment-user-input');
       const textArea = section.querySelector('.comment-area');
+      const feed = section.querySelector('.comment-feed');
 
-      // 1. Pre-fill name if user is already identified
       const existingUser = getUser();
-      if (existingUser && nameInput) {
-        nameInput.value = existingUser;
-      }
+      if (existingUser && nameInput) nameInput.value = existingUser;
 
-      // 2. Toggle Visibility
       toggleBtn?.addEventListener('click', () => {
         const isHidden = formContainer.classList.contains('hidden');
         if (isHidden) {
@@ -124,9 +110,8 @@ const formatTimestamp = (dateString) => {
         }
       });
 
-      // 3. Submit Logic
       submitBtn?.addEventListener('click', async () => {
-        const username = nameInput.value.trim();
+        const username = nameInput.value.trim().toUpperCase();
         const content = textArea.value.trim();
 
         if (!username || !content) {
@@ -134,31 +119,50 @@ const formatTimestamp = (dateString) => {
           return;
         }
 
-        // Save name for next time (reusing emoji identity)
         saveUser(username);
-        
         submitBtn.textContent = "[SENDING...]";
         submitBtn.disabled = true;
 
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from('comments')
-          .insert([{ slug, username: username.toUpperCase(), content }]);
+          .insert([{ slug, username, content }])
+          .select() // Select back the new row to get the created_at timestamp
+          .single();
 
         if (error) {
           console.error("Supabase Error:", error);
           alert("SYSTEM_ERROR: COULD_NOT_POST");
-          submitBtn.textContent = "[SEND_DATA]";
+          submitBtn.textContent = "[SEND]";
           submitBtn.disabled = false;
         } else {
-          // Success: Refresh to show new comment
-          window.location.reload();
+          // 2. SUCCESS: UPDATE DOM MANUALLY (NO REFRESH)
+          
+          // Remove "NO_DATA_FOUND" if it exists
+          const emptyState = feed.querySelector('.no-comments');
+          if (emptyState) emptyState.remove();
+
+          // Clone blueprint and fill data
+          if (template) {
+            const clone = template.content.cloneNode(true);
+            const time = new Date(data.created_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            
+            clone.querySelector('.comment-meta').textContent = `${username} - ${time}`;
+            clone.querySelector('.comment-body').textContent = content;
+            
+            feed.appendChild(clone);
+          }
+
+          // Reset Form
+          textArea.value = '';
+          submitBtn.textContent = "[SEND]";
+          submitBtn.disabled = false;
+          formContainer.classList.add('hidden');
+          toggleBtn.textContent = '[ADD_COMMENT]';
         }
       });
     });
   }
 
-  // Init on load
   initComments();
-  // Support View Transitions
   document.addEventListener('astro:after-swap', initComments);
 </script>
