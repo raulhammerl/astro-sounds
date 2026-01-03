@@ -1,0 +1,42 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PostCard from '../../components/PostCard.astro';
+
+// 1. Generate a new path for every individual post
+export async function getStaticPaths() {
+  const blogEntries = await getCollection('blog');
+  return blogEntries.map(entry => ({
+    params: { slug: entry.slug }, props: { entry },
+  }));
+}
+
+// 2. Get the post data from props
+const { entry } = Astro.props;
+---
+
+<BaseLayout title={entry.data.title}>
+  <div class="single-post-wrapper">
+    <a href="/" class="back-link">← Back to Feed</a>
+    
+    <PostCard post={entry} />
+  </div>
+</BaseLayout>
+
+<style>
+  .single-post-wrapper {
+    margin-top: 2rem;
+  }
+  .back-link {
+    display: inline-block;
+    margin-bottom: 2rem;
+    text-decoration: none;
+    color: var(--muted, #666);
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .back-link:hover {
+    color: var(--text, #111);
+  }
+</style>

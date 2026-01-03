@@ -1,0 +1,164 @@
+---
+import { supabase } from '../lib/supabase';
+
+const { slug } = Astro.props;
+
+// --- 1. Server-Side Fetch ---
+// Get all comments for this post from Supabase
+let { data: comments, error } = await supabase
+  .from('comments')
+  .select('username, content, created_at')
+  .eq('slug', slug)
+  .order('created_at', { ascending: true });
+
+if (error) {
+  console.error("Error fetching comments:", error);
+  comments = [];
+}
+
+// Helper to format timestamps for that "log" look
+const formatTimestamp = (dateString) => {
+  const date = new Date(dateString);
+  return date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+};
+---
+
+<div class="comments-section" data-slug={slug}>
+  <div class="separator">-- COMMENTS -------------------------------------------</div>
+  
+  <div class="comment-feed">
+    {comments && comments.length > 0 ? (
+      comments.map((comment) => (
+        <div class="comment-entry">
+          <div class="comment-meta">
+            {comment.username} - {formatTimestamp(comment.created_at)}
+          </div>
+          <p class="comment-body">{comment.content}</p>
+        </div>
+      ))
+    ) : (
+      <div class="no-comments">NO_DATA_FOUND_</div>
+    )}
+  </div>
+
+  <div class="form-toggle-wrapper">
+    <button class="cmd-btn toggle-comment-btn">[ADD_COMMENT]</button>
+  </div>
+
+  <div class="comment-form-container hidden">
+    <div class="input-header">WRITE_COMMENT_</div>
+    <textarea class="comment-area" placeholder="TYPE_MESSAGE_HERE..." rows="3"></textarea>
+    <div class="form-footer">
+      <input type="text" class="comment-user-input name-input" placeholder="NAME" />
+      <button type="button" class="submit-comment-btn">[SEND]</button>
+    </div>
+  </div>
+</div>
+
+<style>
+  .comments-section {
+    margin-top: 1.5rem;
+    width: 100%;
+    text-align: left;
+    font-family: var(--font-mono);
+  }
+
+  .comment-feed { margin: 1.5rem 0; display: flex; flex-direction: column; gap: 1.2rem; }
+  
+  .comment-entry { border-left: 1px solid #bcbcbc; padding-left: 1rem; }
+  
+  .comment-meta { font-size: 0.65rem; font-weight: 700; color: #888; text-transform: uppercase; margin-bottom: 0.2rem; }
+  
+  .comment-body { font-size: 0.85rem; color: #333; margin: 0; line-height: 1.4; }
+
+  .no-comments { font-size: 0.7rem; color: #bcbcbc; font-style: italic; }
+
+  .cmd-btn { background: transparent; border: none; font-family: var(--font-mono); font-size: 0.8rem; font-weight: 700; cursor: pointer; color: #bcbcbc; padding: 0; }
+  .cmd-btn:hover { color: #000; text-decoration: underline; }
+
+  .comment-form-container { margin-top: 1.5rem; border: 1px solid #bcbcbc; padding: 1rem; background: #fafafa; }
+  .comment-form-container.hidden { display: none !important; }
+
+  .input-header { font-size: 0.7rem; font-weight: 800; color: #666; margin-bottom: 0.5rem; }
+  
+  textarea { width: 100%; background: #fff; border: 1px solid #bcbcbc; font-family: var(--font-mono); padding: 0.5rem; font-size: 0.85rem; outline: none; resize: vertical; }
+
+  .form-footer { display: flex; justify-content: space-between; margin-top: 0.5rem; gap: 1rem; }
+  
+  .name-input { background: transparent; border: none; border-bottom: 1px solid #bcbcbc; font-family: var(--font-mono); font-size: 0.8rem; flex-grow: 1; outline: none; }
+
+  .submit-comment-btn { background: transparent; border: none; font-family: var(--font-mono); font-weight: 800; cursor: pointer; color: #000; }
+  .submit-comment-btn:hover { background: #000; color: #fff; }
+</style>
+
+<script>
+  import { supabase } from '../lib/supabase';
+  import { getUser, saveUser } from '../lib/identity';
+
+  function initComments() {
+    const sections = document.querySelectorAll('.comments-section');
+
+    sections.forEach(section => {
+      const slug = section.getAttribute('data-slug');
+      const toggleBtn = section.querySelector('.toggle-comment-btn');
+      const formContainer = section.querySelector('.comment-form-container');
+      const submitBtn = section.querySelector('.submit-comment-btn');
+      const nameInput = section.querySelector('.comment-user-input');
+      const textArea = section.querySelector('.comment-area');
+
+      // 1. Pre-fill name if user is already identified
+      const existingUser = getUser();
+      if (existingUser && nameInput) {
+        nameInput.value = existingUser;
+      }
+
+      // 2. Toggle Visibility
+      toggleBtn?.addEventListener('click', () => {
+        const isHidden = formContainer.classList.contains('hidden');
+        if (isHidden) {
+          formContainer.classList.remove('hidden');
+          toggleBtn.textContent = '[CANCEL_]';
+        } else {
+          formContainer.classList.add('hidden');
+          toggleBtn.textContent = '[ADD_COMMENT]';
+        }
+      });
+
+      // 3. Submit Logic
+      submitBtn?.addEventListener('click', async () => {
+        const username = nameInput.value.trim();
+        const content = textArea.value.trim();
+
+        if (!username || !content) {
+          alert("ERROR: BOTH_FIELDS_REQUIRED");
+          return;
+        }
+
+        // Save name for next time (reusing emoji identity)
+        saveUser(username);
+        
+        submitBtn.textContent = "[SENDING...]";
+        submitBtn.disabled = true;
+
+        const { error } = await supabase
+          .from('comments')
+          .insert([{ slug, username: username.toUpperCase(), content }]);
+
+        if (error) {
+          console.error("Supabase Error:", error);
+          alert("SYSTEM_ERROR: COULD_NOT_POST");
+          submitBtn.textContent = "[SEND_DATA]";
+          submitBtn.disabled = false;
+        } else {
+          // Success: Refresh to show new comment
+          window.location.reload();
+        }
+      });
+    });
+  }
+
+  // Init on load
+  initComments();
+  // Support View Transitions
+  document.addEventListener('astro:after-swap', initComments);
+</script>

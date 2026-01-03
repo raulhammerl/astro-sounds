@@ -1,0 +1,43 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PostCard from '../components/PostCard.astro';
+
+// 1. This function is required for dynamic routes
+export async function getStaticPaths({ paginate }) {
+  const allPosts = await getCollection('blog');
+  
+  // Sort posts by date (newest first)
+  const sortedPosts = allPosts.sort((a, b) => 
+    b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
+  );
+
+  // 2. Map the sorted posts to paginated routes
+  return paginate(sortedPosts, { pageSize: 8 });
+}
+
+// 3. All data for the current page is passed via the "page" prop
+const { page } = Astro.props;
+---
+
+<BaseLayout title="Sounds">
+  <div class="home">
+    <ul class="posts-listing" style="list-style: none; padding: 0;">
+      {page.data.map((post) => (
+        <li>
+          <PostCard post={post} />
+        </li>
+      ))}
+    </ul>
+
+    <nav class="pagination">
+      {page.url.prev ? <a href={page.url.prev} class="page-turn-link">&larr; Newer</a> : <span></span>}
+      
+      <span class="page_number">
+        {page.currentPage} of {page.lastPage}
+      </span>
+
+      {page.url.next ? <a href={page.url.next} class="page-turn-link">Older &rarr;</a> : <span></span>}
+    </nav>
+  </div>
+</BaseLayout>
