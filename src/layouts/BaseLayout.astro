@@ -16,19 +16,41 @@ const { title = "Sounds" } = Astro.props;
     />
 
     <script is:inline>
-      const theme = (() => {
-        if (
-          typeof localStorage !== "undefined" &&
-          localStorage.getItem("theme")
-        ) {
-          return localStorage.getItem("theme");
+      // 1. THIS RUNS PERMANENTLY IN THE HEAD
+      function applyTheme() {
+        const localStorageTheme = localStorage.getItem("theme");
+        const systemTheme = window.matchMedia("(prefers-color-scheme: dark)")
+          .matches
+          ? "dark"
+          : "light";
+
+        // Priority: Saved Preference > System Preference
+        const theme = localStorageTheme || systemTheme;
+        document.documentElement.setAttribute("data-theme", theme);
+      }
+
+      // Initialize immediately
+      applyTheme();
+
+      // 2. THE SECRET SAUCE: The "Eternal" System Listener
+      const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+
+      const handleSystemChange = (e) => {
+        // If the user hasn't set a manual override, follow the system instantly
+        if (!localStorage.getItem("theme")) {
+          document.documentElement.setAttribute(
+            "data-theme",
+            e.matches ? "dark" : "light",
+          );
+          // Dispatch custom event to update the button text if it exists on the page
+          window.dispatchEvent(new Event("theme-changed"));
         }
-        if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
-          return "dark";
-        }
-        return "light";
-      })();
-      document.documentElement.setAttribute("data-theme", theme);
+      };
+
+      // Support old and new browsers
+      mediaQuery.addEventListener
+        ? mediaQuery.addEventListener("change", handleSystemChange)
+        : mediaQuery.addListener(handleSystemChange);
     </script>
   </head>
 
@@ -59,27 +81,40 @@ const { title = "Sounds" } = Astro.props;
     </div>
 
     <script>
-      const toggle = document.getElementById("theme-toggle");
-      const themeText = document.getElementById("theme-text");
+      function setupToggle() {
+        const toggle = document.getElementById("theme-toggle");
+        const themeText = document.getElementById("theme-text");
 
-      const updateText = (theme) => {
-        if (themeText) {
-          themeText.innerText = theme === "dark" ? "LIGHT" : "DARK";
-        }
-      };
+        const updateText = () => {
+          const currentTheme =
+            document.documentElement.getAttribute("data-theme");
+          if (themeText) {
+            themeText.innerText = currentTheme === "dark" ? "LIGHT" : "DARK";
+          }
+        };
 
-      // Set initial text
-      updateText(document.documentElement.getAttribute("data-theme"));
+        // Set initial text
+        updateText();
 
-      toggle?.addEventListener("click", () => {
-        const currentTheme =
-          document.documentElement.getAttribute("data-theme");
-        const newTheme = currentTheme === "dark" ? "light" : "dark";
+        // Manual Click
+        toggle?.addEventListener("click", () => {
+          const currentTheme =
+            document.documentElement.getAttribute("data-theme");
+          const newTheme = currentTheme === "dark" ? "light" : "dark";
 
-        document.documentElement.setAttribute("data-theme", newTheme);
-        localStorage.setItem("theme", newTheme);
-        updateText(newTheme);
-      });
+          document.documentElement.setAttribute("data-theme", newTheme);
+          localStorage.setItem("theme", newTheme);
+          updateText();
+        });
+
+        // Listen for the system change event from the head script
+        window.addEventListener("theme-changed", updateText);
+      }
+
+      // Run on load
+      setupToggle();
+      // Run after Astro page swaps (essential for View Transitions)
+      document.addEventListener("astro:after-swap", setupToggle);
     </script>
   </body>
 </html>

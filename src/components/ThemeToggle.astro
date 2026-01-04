@@ -15,8 +15,7 @@
     font-size: 0.7rem;
   }
 
-  /* Logic: Hide the opposite label */
-  /* When Light: Hide "To Light" */
+  /* Logic: The CSS reacts instantly to the data-theme attribute */
   .text-to-light {
     display: none;
   }
@@ -24,35 +23,76 @@
     display: inline;
   }
 
-  /* When Dark: Hide "To Dark", Show "To Light" */
-  :global([data-theme="dark"]) .text-to-dark {
+  :root[data-theme="dark"] .text-to-dark {
     display: none;
   }
-  :global([data-theme="dark"]) .text-to-light {
+  :root[data-theme="dark"] .text-to-light {
     display: inline;
   }
 </style>
 
-<script>
-  const toggle = document.getElementById("theme-toggle");
+<script is:inline>
+  // We wrap this in a function so we can re-init on Astro page changes
+  function initThemeSwitcher() {
+    const systemInitiatedDark = window.matchMedia(
+      "(prefers-color-scheme: dark)",
+    );
+    const toggleBtn = document.getElementById("theme-toggle");
 
-  const updateTheme = (theme) => {
-    document.documentElement.setAttribute("data-theme", theme);
-    localStorage.setItem("theme", theme);
-  };
-
-  toggle?.addEventListener("click", () => {
-    const isDark =
-      document.documentElement.getAttribute("data-theme") === "dark";
-    updateTheme(isDark ? "light" : "dark");
-  });
-
-  // Sync with system changes
-  window
-    .matchMedia("(prefers-color-scheme: dark)")
-    .addEventListener("change", (e) => {
-      if (!localStorage.getItem("theme")) {
-        updateTheme(e.matches ? "dark" : "light");
+    // 1. YOUR EXACT FUNCTION (Updated for data-theme)
+    function prefersColorTest(systemInitiatedDark) {
+      if (systemInitiatedDark.matches) {
+        document.documentElement.setAttribute("data-theme", "dark");
+        localStorage.setItem("theme", ""); // Reset to sync mode
+      } else {
+        document.documentElement.setAttribute("data-theme", "light");
+        localStorage.setItem("theme", ""); // Reset to sync mode
       }
-    });
+    }
+
+    // YOUR EXACT LISTENER (Using .addListener as per your old version)
+    systemInitiatedDark.addListener(prefersColorTest);
+
+    // 2. YOUR EXACT SWITCHER (Updated for data-theme)
+    function modeSwitcher() {
+      let theme = localStorage.getItem("theme");
+      if (theme === "dark") {
+        document.documentElement.setAttribute("data-theme", "light");
+        localStorage.setItem("theme", "light");
+      } else if (theme === "light") {
+        document.documentElement.setAttribute("data-theme", "dark");
+        localStorage.setItem("theme", "dark");
+      } else if (systemInitiatedDark.matches) {
+        document.documentElement.setAttribute("data-theme", "light");
+        localStorage.setItem("theme", "light");
+      } else {
+        document.documentElement.setAttribute("data-theme", "dark");
+        localStorage.setItem("theme", "dark");
+      }
+    }
+
+    // Attach the switcher to the button
+    toggleBtn?.removeEventListener("click", modeSwitcher);
+    toggleBtn?.addEventListener("click", modeSwitcher);
+
+    // 3. YOUR EXACT INITIAL LOAD LOGIC
+    let theme = localStorage.getItem("theme");
+    if (theme === "dark") {
+      document.documentElement.setAttribute("data-theme", "dark");
+    } else if (theme === "light") {
+      document.documentElement.setAttribute("data-theme", "light");
+    } else {
+      // If no theme, follow system default
+      document.documentElement.setAttribute(
+        "data-theme",
+        systemInitiatedDark.matches ? "dark" : "light",
+      );
+    }
+  }
+
+  // Run on initial load
+  initThemeSwitcher();
+
+  // Run after Astro page swaps (essential for blogs with View Transitions)
+  document.addEventListener("astro:after-swap", initThemeSwitcher);
 </script>
