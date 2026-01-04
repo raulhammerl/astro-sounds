@@ -19,13 +19,13 @@ const { title = "Sounds" } = Astro.props;
         <a href="/" class="site-title">SOUNDS</a>
         <div class="separator">------------------------------------------------------------</div>
         <nav class="links">
-          <a href="/" class="page-link">[FEED]</a>
-          <a href="/search" class="page-link">[SEARCH]</a>
-          <a href="/about" class="page-link">[INFO]</a>
-          <button id="theme-toggle" class="page-link" style="background: none; border: none; cursor: pointer; font-family: inherit; font-size: inherit;">
-          [<span id="theme-text">DARK</span>]
-        </button>
-        </nav>
+  <a href="/" class="page-link">[FEED]</a>
+  <a href="/search" class="page-link">[SEARCH]</a>
+  <a href="/about" class="page-link">[INFO]</a>
+  <button id="theme-toggle" class="page-link">
+    [<span id="theme-text">DARK</span>]
+  </button>
+</nav>
         <div class="separator">------------------------------------------------------------</div>
       </header>
 
@@ -56,4 +56,4 @@ const { title = "Sounds" } = Astro.props;
   window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
     updateTheme(e.matches ? 'dark' : 'light');
   });
-</script>
+  </script>

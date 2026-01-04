@@ -1,14 +1,27 @@
 ---
-import { supabase } from '../lib/supabase';
+import { supabase } from "../lib/supabase";
 
 const { slug } = Astro.props;
-const availableEmojis = ['🔥', '🔊', '💿', '👯', '💎', '🥧', '🥰', '😬', '😵‍💫', '🤯', '🤣', '👍'];
+const availableEmojis = [
+  "🔥",
+  "🔊",
+  "💿",
+  "👯",
+  "💎",
+  "🥧",
+  "🥰",
+  "😬",
+  "😵‍💫",
+  "🤯",
+  "🤣",
+  "👍",
+];
 
 // --- 1. Server-Side Data Fetching ---
 let { data: rawReactions, error } = await supabase
-  .from('reactions')
-  .select('emoji, username')
-  .eq('slug', slug);
+  .from("reactions")
+  .select("emoji, username")
+  .eq("slug", slug);
 
 if (error) {
   console.error("Error fetching reactions:", error);
@@ -30,31 +43,35 @@ const existingReactionEntries = Object.entries(groupedReactions);
 <div class="reaction-wrapper" data-slug={slug}>
   <div class="active-reactions">
     <span class="prefix">REACTIONS//</span>
-    
+
     <div class="reaction-list">
-      {existingReactionEntries.map(([emoji, names]) => (
-        /* ADDED: data-emoji-type={emoji} so JS can find it */
-        <div class="reaction-item" tabindex="0" data-emoji-type={emoji}>
-          <div class="reaction-badge">
-            <span class="emoji">{emoji}</span> 
-            <span class="count">{names.length.toString().padStart(2, '0')}</span>
+      {
+        existingReactionEntries.map(([emoji, names]) => (
+          /* ADDED: data-emoji-type={emoji} so JS can find it */
+          <div class="reaction-item" tabindex="0" data-emoji-type={emoji}>
+            <div class="reaction-badge">
+              <span class="emoji">{emoji}</span>
+              <span class="count">
+                {names.length.toString().padStart(2, "0")}
+              </span>
+            </div>
+            <div class="name-tooltip">{names.join(", ")}</div>
           </div>
-          <div class="name-tooltip">
-            {names.join(', ')}
-          </div>
-        </div>
-      ))}
+        ))
+      }
     </div>
 
     <div class="add-reaction-container">
       <button class="add-btn" type="button">[+]</button>
       <div class="emoji-menu">
         <div class="menu-inner">
-          {availableEmojis.map(emoji => (
-            <button class="menu-item" data-emoji={emoji} type="button">
-              {emoji}
-            </button>
-          ))}
+          {
+            availableEmojis.map((emoji) => (
+              <button class="menu-item" data-emoji={emoji} type="button">
+                {emoji}
+              </button>
+            ))
+          }
         </div>
       </div>
     </div>
@@ -64,7 +81,7 @@ const existingReactionEntries = Object.entries(groupedReactions);
 <template id="reaction-template">
   <div class="reaction-item" tabindex="0" data-emoji-type="">
     <div class="reaction-badge">
-      <span class="emoji"></span> 
+      <span class="emoji"></span>
       <span class="count">01</span>
     </div>
     <div class="name-tooltip"></div>
@@ -72,84 +89,197 @@ const existingReactionEntries = Object.entries(groupedReactions);
 </template>
 
 <style>
-  .reaction-wrapper { margin: 1rem 0; font-family: var(--font-mono); font-size: 0.8rem; display: flex; justify-content: center; }
-  .active-reactions { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; justify-content: center; }
-  .prefix { color: #888; font-weight: 800; font-size: 0.75rem; }
-  .reaction-list { display: flex; gap: 0.5rem; align-items: center; }
-  .reaction-item { position: relative; cursor: help; }
-  .reaction-badge { border: 1px solid #bcbcbc; display: flex; gap: 4px; padding: 1px 5px; font-size: 0.75rem; color: #666; background: #fff; align-items: center; }
-  .reaction-badge .emoji { font-size: 0.9rem; filter: grayscale(100%); transition: filter 0.2s ease; }
-  .reaction-item:hover .reaction-badge { border-color: #000; color: #000; }
-  .reaction-item:hover .emoji { filter: grayscale(0%); }
-  .name-tooltip { position: absolute; bottom: 130%; left: 50%; transform: translateX(-50%); background: #000; color: #fff; padding: 3px 6px; font-size: 0.65rem; white-space: nowrap; font-weight: 700; opacity: 0; visibility: hidden; transition: opacity 0.1s ease, visibility 0.1s ease; z-index: 20; pointer-events: none; }
-  .reaction-item:hover .name-tooltip, .reaction-item:focus .name-tooltip { opacity: 1; visibility: visible; }
-  .add-reaction-container { position: relative; padding: 10px 0; margin: -10px 0; }
-  .add-btn { background: transparent; border: none; cursor: pointer; color: #bcbcbc; font-weight: 800; font-family: var(--font-mono); padding: 0 4px;}
-  .add-btn:hover { color: #000; }
-  .emoji-menu { position: absolute; bottom: 80%; left: 50%; transform: translateX(-50%); z-index: 100; opacity: 0; visibility: hidden; transition: opacity 0.1s ease, visibility 0.1s ease; padding-bottom: 15px; }
-  .add-reaction-container:hover .emoji-menu { opacity: 1; visibility: visible; }
-  .menu-inner { background: #fff; border: 1px solid #000; display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; padding: 4px; box-shadow: 3px 3px 0px #bcbcbc; }
-  .menu-item { background: transparent; border: none; cursor: pointer; font-size: 1.2rem; padding: 5px; transition: background 0.1s; }
-  .menu-item:hover { background: #eee; }
+  .reaction-wrapper {
+    margin: 1rem 0;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    display: flex;
+    justify-content: center;
+  }
+  .active-reactions {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .prefix {
+    color: #888;
+    font-weight: 800;
+    font-size: 0.75rem;
+  }
+  .reaction-list {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+  }
+  .reaction-item {
+    position: relative;
+    cursor: help;
+  }
+  .reaction-badge {
+    border: 1px solid #bcbcbc;
+    display: flex;
+    gap: 4px;
+    padding: 1px 5px;
+    font-size: 0.75rem;
+    color: #666;
+    background: #fff;
+    align-items: center;
+  }
+  .reaction-badge .emoji {
+    font-size: 0.9rem;
+    filter: grayscale(100%);
+    transition: filter 0.2s ease;
+  }
+  .reaction-item:hover .reaction-badge {
+    border-color: #000;
+    color: #000;
+  }
+  .reaction-item:hover .emoji {
+    filter: grayscale(0%);
+  }
+  .name-tooltip {
+    position: absolute;
+    bottom: 130%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #000;
+    color: #fff;
+    padding: 3px 6px;
+    font-size: 0.65rem;
+    white-space: nowrap;
+    font-weight: 700;
+    opacity: 0;
+    visibility: hidden;
+    transition:
+      opacity 0.1s ease,
+      visibility 0.1s ease;
+    z-index: 20;
+    pointer-events: none;
+  }
+  .reaction-item:hover .name-tooltip,
+  .reaction-item:focus .name-tooltip {
+    opacity: 1;
+    visibility: visible;
+  }
+  .add-reaction-container {
+    position: relative;
+    padding: 10px 0;
+    margin: -10px 0;
+  }
+  .add-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: #bcbcbc;
+    font-weight: 800;
+    font-family: var(--font-mono);
+    padding: 0 4px;
+  }
+  .add-btn:hover {
+    color: #000;
+  }
+  .emoji-menu {
+    position: absolute;
+    bottom: 80%;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 100;
+    opacity: 0;
+    visibility: hidden;
+    transition:
+      opacity 0.1s ease,
+      visibility 0.1s ease;
+    padding-bottom: 15px;
+  }
+  .add-reaction-container:hover .emoji-menu {
+    opacity: 1;
+    visibility: visible;
+  }
+  .menu-inner {
+    background: #fff;
+    border: 1px solid #000;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2px;
+    padding: 4px;
+    box-shadow: 3px 3px 0px #bcbcbc;
+  }
+  .menu-item {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 1.2rem;
+    padding: 5px;
+    transition: background 0.1s;
+  }
+  .menu-item:hover {
+    background: #eee;
+  }
 </style>
 
 <script>
-  import { supabase } from '../lib/supabase';
-  import { promptForIdentity } from '../lib/identity';
+  import { supabase } from "../lib/supabase";
+  import { promptForIdentity } from "../lib/identity";
 
   function initReactions() {
-    const modules = document.querySelectorAll('.reaction-wrapper');
-    const template = document.getElementById('reaction-template');
+    const modules = document.querySelectorAll(".reaction-wrapper");
+    const template = document.getElementById("reaction-template");
 
-    modules.forEach(module => {
-      const slug = module.getAttribute('data-slug');
-      const menuItems = module.querySelectorAll('.menu-item');
-      const reactionList = module.querySelector('.reaction-list');
+    modules.forEach((module) => {
+      const slug = module.getAttribute("data-slug");
+      const menuItems = module.querySelectorAll(".menu-item");
+      const reactionList = module.querySelector(".reaction-list");
 
-      menuItems.forEach(item => {
+      menuItems.forEach((item) => {
         const newItem = item.cloneNode(true);
         item.parentNode.replaceChild(newItem, item);
 
-        newItem.addEventListener('click', async (e) => {
+        newItem.addEventListener("click", async (e) => {
           e.stopPropagation();
           const username = promptForIdentity();
           if (!username) return;
 
-          const emoji = newItem.getAttribute('data-emoji');
-          newItem.style.opacity = '0.5';
+          const emoji = newItem.getAttribute("data-emoji");
+          newItem.style.opacity = "0.5";
 
           const { error } = await supabase
-            .from('reactions')
+            .from("reactions")
             .insert([{ slug, emoji, username }]);
 
           if (error) {
-            if(error.code !== '23505') {
-              console.error('Database Error:', error);
+            if (error.code !== "23505") {
+              console.error("Database Error:", error);
               alert("SYSTEM_ERROR: Could not save reaction.");
             }
-            newItem.style.opacity = '1';
+            newItem.style.opacity = "1";
           } else {
-            newItem.style.opacity = '1';
-            let existingBadge = module.querySelector(`.reaction-item[data-emoji-type="${emoji}"]`);
+            newItem.style.opacity = "1";
+            let existingBadge = module.querySelector(
+              `.reaction-item[data-emoji-type="${emoji}"]`,
+            );
 
             if (existingBadge) {
-              const countEl = existingBadge.querySelector('.count');
+              const countEl = existingBadge.querySelector(".count");
               const currentCount = parseInt(countEl.textContent || "0");
-              countEl.textContent = (currentCount + 1).toString().padStart(2, '0');
-              const tooltipEl = existingBadge.querySelector('.name-tooltip');
+              countEl.textContent = (currentCount + 1)
+                .toString()
+                .padStart(2, "0");
+              const tooltipEl = existingBadge.querySelector(".name-tooltip");
               if (tooltipEl) {
                 tooltipEl.textContent += `, ${username}`;
               }
             } else if (template && reactionList) {
               const clone = template.content.cloneNode(true);
-              const itemEl = clone.querySelector('.reaction-item');
-              const emojiEl = clone.querySelector('.emoji');
-              const countEl = clone.querySelector('.count');
-              const tooltipEl = clone.querySelector('.name-tooltip');
+              const itemEl = clone.querySelector(".reaction-item");
+              const emojiEl = clone.querySelector(".emoji");
+              const countEl = clone.querySelector(".count");
+              const tooltipEl = clone.querySelector(".name-tooltip");
 
-              itemEl.setAttribute('data-emoji-type', emoji);
+              itemEl.setAttribute("data-emoji-type", emoji);
               emojiEl.textContent = emoji;
-              countEl.textContent = '01';
+              countEl.textContent = "01";
               tooltipEl.textContent = username;
 
               reactionList.appendChild(clone);
@@ -161,5 +291,5 @@ const existingReactionEntries = Object.entries(groupedReactions);
   }
 
   initReactions();
-  document.addEventListener('astro:after-swap', initReactions);
+  document.addEventListener("astro:after-swap", initReactions);
 </script>

@@ -6,18 +6,22 @@
   --text-muted: #888888;
   --separator-color: #bcbcbc;
   --meta-bg: #eeeeee;
+  --meta-text: #000000;
   --accent: #000000;
   --accent-inv: #ffffff;
+  --comment-border: #eeeeee;
 }
 
 [data-theme='dark'] {
-  --bg: rgb(26, 26, 26);
-  --text: #f8fafc;
-  --text-muted: #94a3b8;
-  --separator-color: #444444;
-  --meta-bg: #334155;
+  --bg: #202220;
+  --text: #e2e8f0;
+  --text-muted: #64748b;
+  --separator-color: #f8fafc;
+  --meta-bg: #ffffff; /* High contrast badges */
+  --meta-text: #000000;
   --accent: #ffffff;
-  --accent-inv: #000000;
+  --accent-inv: #1a1a1a;
+  --comment-border: #334155;
 }
 
 body {

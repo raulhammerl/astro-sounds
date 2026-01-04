@@ -1,33 +1,39 @@
 ---
-import BaseLayout from '../layouts/BaseLayout.astro';
+import BaseLayout from "../layouts/BaseLayout.astro";
 ---
 
 <BaseLayout title="SYSTEM_INFO">
   <main class="info-container">
     <section class="manifest">
       <div class="terminal-header">-- ABOUT --------------------------</div>
-      
+
       <h1>SOUNDS</h1>
-      
+
       <div class="description">
-        <p>
-          This is a private portal for sharing music between friends. 
-        </p>
+        <p>This is a private portal for sharing music between friends.</p>
       </div>
 
       <div class="grid">
         <div class="grid-item">
           <h3>[PURPOSE]</h3>
-          <p>Documenting the sonic landscape of our collective focus. Music for coding, dreaming, and existing.</p>
+          <p>
+            Documenting the sonic landscape of our collective focus. Music for
+            coding, dreaming, and existing.
+          </p>
         </div>
-        
+
         <div class="grid-item">
           <h3>[AUTHORS]</h3>
-          <p>A closed loop of contributors. If you have the secret link, you have the power to broadcast.</p>
+          <p>
+            A closed loop of contributors. If you have the secret link, you have
+            the power to broadcast.
+          </p>
         </div>
       </div>
 
-      <div class="separator">--------------------------------------------------</div>
+      <div class="separator">
+        --------------------------------------------------
+      </div>
 
       <div class="footer-links">
         <a href="/" class="cmd-link">&larr; RETURN_TO_FEED</a>
@@ -45,14 +51,17 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   }
 
   .manifest {
-    border: 1px solid #000;
+    /* Uses var(--text) for the border so it's black in light and white in dark */
+    border: 1px solid var(--text);
     padding: 2.5rem;
-    background: #fff;
-    box-shadow: 10px 10px 0px #eee;
+    background: var(--bg);
+    /* Updated shadow: using var(--meta-bg) to keep the 3D effect subtle in dark mode */
+    box-shadow: 10px 10px 0px var(--meta-bg);
+    transition: all 0.3s ease;
   }
 
   .terminal-header {
-    color: #888;
+    color: var(--text-muted);
     font-size: 0.7rem;
     font-weight: 800;
     margin-bottom: 2rem;
@@ -64,13 +73,14 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     margin: 0 0 1.5rem 0;
     letter-spacing: -1px;
     text-transform: uppercase;
+    color: var(--text);
   }
 
   .description p {
     font-size: 1.1rem;
     line-height: 1.5;
     margin-bottom: 2rem;
-    color: #333;
+    color: var(--text);
   }
 
   .grid {
@@ -84,18 +94,18 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     font-size: 0.8rem;
     font-weight: 900;
     margin-bottom: 0.5rem;
-    color: #000;
+    color: var(--text);
   }
 
   .grid-item p {
     font-size: 0.85rem;
     line-height: 1.4;
-    color: #666;
+    color: var(--text-muted);
   }
 
   .separator {
     margin: 3rem 0;
-    color: #eee;
+    color: var(--separator-color);
     letter-spacing: 2px;
   }
 
@@ -108,7 +118,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   .cmd-link {
     text-decoration: none;
     font-weight: 800;
-    color: #000;
+    color: var(--text);
     font-size: 0.9rem;
   }
 
@@ -118,11 +128,13 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
   .status-indicator {
     font-size: 0.7rem;
-    color: #00ff00; /* Classic terminal green */
+    color: #00ff00; /* Classic terminal green remains as a theme accent */
     font-weight: 800;
   }
 
   @media (max-width: 600px) {
-    .grid { grid-template-columns: 1fr; }
+    .grid {
+      grid-template-columns: 1fr;
+    }
   }
 </style>
