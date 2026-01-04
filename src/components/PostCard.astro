@@ -1,80 +1,97 @@
 ---
-import EmojiReactions from './EmojiReactions.astro';
-import Comments from './Comments.astro';
+import EmojiReactions from "./EmojiReactions.astro";
+import Comments from "./Comments.astro";
 
 const { post } = Astro.props;
 
 // 1. Data mapping from Supabase object
-const { artist, title, youtube_url, description, posted_by, created_at, slug } = post;
+const { artist, title, youtube_url, description, posted_by, created_at, slug } =
+  post;
 
 // 2. Helper to get the 11-character YouTube ID from a full URL
 const getYoutubeId = (url) => {
   if (!url) return null;
-  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+  const regExp =
+    /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
   const match = url.match(regExp);
-  return (match && match[2].length === 11) ? match[2] : null;
+  return match && match[2].length === 11 ? match[2] : null;
 };
 
 const youtubeId = getYoutubeId(youtube_url);
 const thumbnailUrl = `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`;
 
 // 3. Format the Supabase timestamp
-const formattedDate = created_at 
-  ? new Date(created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
-  : 'RECENT';
+const formattedDate = created_at
+  ? new Date(created_at).toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    })
+  : "RECENT";
 ---
 
 <article class="cell">
   <div class="post-meta">
     {formattedDate} &nbsp; {posted_by}
   </div>
-  
+
   <div class="post-title-container">
-     <span class="artist">{artist}</span>
-     <span class="divider"> // </span>
-     <span class="track-title">{title}</span>
+    <span class="artist">{artist}</span>
+    <span class="divider"> // </span>
+    <span class="track-title">{title}</span>
   </div>
 
-  {youtubeId && (
-    <div class="video-placeholder" data-id={youtubeId} data-title={`${artist} - ${title}`}>
-      <img src={thumbnailUrl} alt={title} loading="lazy" />
-      <div class="play-button">▶</div>
-    </div>
-  )}
+  {
+    youtubeId && (
+      <div
+        class="video-placeholder"
+        data-id={youtubeId}
+        data-title={`${artist} - ${title}`}
+      >
+        <img src={thumbnailUrl} alt={title} loading="lazy" />
+        <div class="play-button">▶</div>
+      </div>
+    )
+  }
 
   {description && <p class="post-description">{description}</p>}
 
   <EmojiReactions slug={slug} />
   <Comments slug={slug} />
-
 </article>
 
 <script>
   function initVideoPlaceholders() {
-    const placeholders = document.querySelectorAll('.video-placeholder');
+    const placeholders = document.querySelectorAll(".video-placeholder");
 
-    placeholders.forEach(wrapper => {
-      if (wrapper.querySelector('iframe')) return;
+    placeholders.forEach((wrapper) => {
+      if (wrapper.querySelector("iframe")) return;
 
-      wrapper.addEventListener('click', () => {
-        const id = wrapper.getAttribute('data-id');
-        const title = wrapper.getAttribute('data-title');
-        
-        const iframe = document.createElement('iframe');
-        iframe.setAttribute('src', `https://www.youtube.com/embed/${id}?autoplay=1`);
-        iframe.setAttribute('title', title || 'Video');
-        iframe.setAttribute('frameborder', '0');
-        iframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture');
-        iframe.setAttribute('allowfullscreen', 'true');
-        
-        wrapper.innerHTML = '';
+      wrapper.addEventListener("click", () => {
+        const id = wrapper.getAttribute("data-id");
+        const title = wrapper.getAttribute("data-title");
+
+        const iframe = document.createElement("iframe");
+        iframe.setAttribute(
+          "src",
+          `https://www.youtube.com/embed/${id}?autoplay=1`,
+        );
+        iframe.setAttribute("title", title || "Video");
+        iframe.setAttribute("frameborder", "0");
+        iframe.setAttribute(
+          "allow",
+          "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture",
+        );
+        iframe.setAttribute("allowfullscreen", "true");
+
+        wrapper.innerHTML = "";
         wrapper.appendChild(iframe);
       });
     });
   }
 
   initVideoPlaceholders();
-  document.addEventListener('astro:after-swap', initVideoPlaceholders);
+  document.addEventListener("astro:after-swap", initVideoPlaceholders);
 </script>
 
 <style>
@@ -83,7 +100,7 @@ const formattedDate = created_at
     flex-direction: column;
     align-items: center;
     text-align: center;
-    margin-bottom: 5rem; 
+    margin-bottom: 5rem;
     padding-bottom: 2rem;
     width: 100%;
   }
@@ -109,9 +126,16 @@ const formattedDate = created_at
   }
 
   /* Artist is prominent, Track Title uses the muted variable for contrast */
-  .artist { color: var(--text); }
-  .divider { color: var(--separator-color); font-weight: 400; }
-  .track-title { color: var(--text-muted); }
+  .artist {
+    color: var(--text);
+  }
+  .divider {
+    color: var(--separator-color);
+    font-weight: 400;
+  }
+  .track-title {
+    color: var(--text-muted);
+  }
 
   .post-description {
     margin-top: 1.5rem;
@@ -127,7 +151,6 @@ const formattedDate = created_at
     background: #000; /* Keep background black for video feel */
     cursor: pointer;
     position: relative;
-    border: 1px solid var(--text); /* Border follows theme text color */
     display: flex;
     align-items: center;
     justify-content: center;
