@@ -10,6 +10,7 @@
   --accent: #000000;
   --accent-inv: #ffffff;
   --comment-border: #eeeeee;
+  --placeholder-color: #888888;
 }
 
 [data-theme='dark'] {
@@ -17,11 +18,13 @@
   --text: #e2e8f0;
   --text-muted: #64748b;
   --separator-color: #f8fafc;
-  --meta-bg: #ffffff; /* High contrast badges */
+  --meta-bg: #ffffff;
   --meta-text: #000000;
   --accent: #ffffff;
   --accent-inv: #1a1a1a;
   --comment-border: #334155;
+  /* Lighter placeholder for dark mode legibility */
+  --placeholder-color: #94a3b8;
 }
 
 body {
@@ -35,13 +38,37 @@ body {
   line-height: 1.5;
 }
 
+/* --- FORM & INPUT ELEMENTS --- */
+input, textarea {
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--separator-color);
+  font-family: var(--font-mono);
+  transition: border-color 0.2s ease;
+}
+
+/* Specific Placeholder Handling */
+input::placeholder, 
+textarea::placeholder {
+  color: var(--placeholder-color);
+  opacity: 0.7; /* Adds a bit of depth */
+}
+
+/* Slightly brighten placeholder on focus for better UX */
+input:focus::placeholder, 
+textarea:focus::placeholder {
+  opacity: 1;
+  color: var(--text);
+}
+
+/* --- THE REST OF YOUR CSS --- */
+
 .centered-container {
   width: 100%;
   max-width: var(--max-width);
   padding: 2rem 1rem;
 }
 
-/* --- SEPARATORS --- */
 .separator {
   overflow: hidden;
   white-space: nowrap;
@@ -52,7 +79,6 @@ body {
   color: var(--separator-color);
 }
 
-/* --- HEADER --- */
 .site-header {
   text-align: center;
   margin-bottom: 3rem;
@@ -79,15 +105,18 @@ body {
   color: var(--text);
   font-weight: 700;
   padding: 0.2rem 0.5rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: inherit;
 }
 
-/* Updated Hover: uses variables to invert colors correctly in both modes */
 .page-link:hover, #theme-toggle:hover {
   background: var(--accent);
   color: var(--accent-inv);
 }
 
-/* --- FEED / POSTS --- */
 .post-feed {
   display: flex;
   flex-direction: column;
@@ -101,32 +130,22 @@ body {
   text-align: center;
 }
 
-.post-link {
-  font-size: 1.5rem;
-  font-weight: 800;
-  text-decoration: none;
-  color: var(--text);
-  text-transform: uppercase;
-}
-
 .post-meta {
   font-size: 0.8rem;
   margin-bottom: 1rem;
   background: var(--meta-bg);
-  color: var(--text);
+  color: var(--meta-text); /* Changed to meta-text for better contrast */
   padding: 0 5px;
 }
 
-/* Media handling */
 .video-container {
   width: 100%;
   aspect-ratio: 16 / 9;
   border: 1px solid var(--text);
   margin: 1rem 0;
-  background: var(--meta-bg); /* Placeholder color for loading */
+  background: var(--meta-bg);
 }
 
-/* --- FOOTER --- */
 .footer-grid {
   display: flex;
   justify-content: space-between;
@@ -135,7 +154,6 @@ body {
   color: var(--text-muted);
 }
 
-/* --- THEME TOGGLE SPECIFIC --- */
 #theme-toggle {
   background: none;
   border: none;
