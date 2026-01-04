@@ -1,50 +1,58 @@
 <button id="theme-toggle" aria-label="Toggle dark mode">
-  <span class="light-text">Light Mode</span>
-  <span class="dark-text">Dark Mode</span>
+  <span class="text-to-light">LIGHT_MODE</span>
+  <span class="text-to-dark">DARK_MODE</span>
 </button>
 
 <style>
-  /* Base button styling */
   #theme-toggle {
     padding: 0.5rem 1rem;
     cursor: pointer;
-    border-radius: 8px;
-    border: 1px solid var(--border-color);
-    background: var(--bg-secondary);
-    color: var(--text-color);
+    font-family: var(--font-mono);
+    border: 1px solid var(--search-border, #000);
+    background: transparent;
+    color: var(--search-text, #000);
+    text-transform: uppercase;
+    font-size: 0.7rem;
   }
 
-  /* Logic to show/hide text based on the theme */
-  .light-text, :global([data-theme='dark']) .dark-text {
+  /* Logic: Hide the opposite label */
+  /* When Light: Hide "To Light" */
+  .text-to-light {
     display: none;
   }
-  
-  :global([data-theme='dark']) .light-text, .dark-text {
-    display: inline-block;
+  .text-to-dark {
+    display: inline;
+  }
+
+  /* When Dark: Hide "To Dark", Show "To Light" */
+  :global([data-theme="dark"]) .text-to-dark {
+    display: none;
+  }
+  :global([data-theme="dark"]) .text-to-light {
+    display: inline;
   }
 </style>
 
 <script>
   const toggle = document.getElementById("theme-toggle");
-  const systemSettingDark = window.matchMedia("(prefers-color-scheme: dark)");
 
-  const updateThemeOnHtml = (theme) => {
+  const updateTheme = (theme) => {
     document.documentElement.setAttribute("data-theme", theme);
     localStorage.setItem("theme", theme);
   };
 
-  // 1. Handle Click
   toggle?.addEventListener("click", () => {
-    const currentTheme = document.documentElement.getAttribute("data-theme");
-    const newTheme = currentTheme === "dark" ? "light" : "dark";
-    updateThemeOnHtml(newTheme);
+    const isDark =
+      document.documentElement.getAttribute("data-theme") === "dark";
+    updateTheme(isDark ? "light" : "dark");
   });
 
-  // 2. Your "Smart" System Listener (The part you liked!)
-  systemSettingDark.addEventListener("change", (e) => {
-    // Only switch automatically if the user hasn't set a manual override
-    // Or, remove the check if you want it to always follow the system
-    const newTheme = e.matches ? "dark" : "light";
-    updateThemeOnHtml(newTheme);
-  });
+  // Sync with system changes
+  window
+    .matchMedia("(prefers-color-scheme: dark)")
+    .addEventListener("change", (e) => {
+      if (!localStorage.getItem("theme")) {
+        updateTheme(e.matches ? "dark" : "light");
+      }
+    });
 </script>

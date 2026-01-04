@@ -49,6 +49,7 @@ import Layout from "../layouts/BaseLayout.astro";
     max-width: 600px;
     margin: 4rem auto;
     padding: 2rem;
+    /* Uses var(--text) so the border is sharp white in dark mode */
     border: 1px solid var(--text);
     background: var(--bg);
     transition: all 0.3s ease;
@@ -58,7 +59,8 @@ import Layout from "../layouts/BaseLayout.astro";
     font-family: var(--font-mono);
     font-weight: 800;
     margin-bottom: 2rem;
-    color: var(--text-muted);
+    /* Updated to use var(--text) so it matches the "SOUNDS" title and separators */
+    color: var(--text);
   }
 
   .brutalist-form {
@@ -86,9 +88,8 @@ import Layout from "../layouts/BaseLayout.astro";
     color: var(--text);
   }
 
-  /* NOTE: Base input/textarea styles (colors, borders, and placeholders) 
-     are now inherited from global.css. 
-     We only keep layout-specific padding/size here.
+  /* We've removed border, background, and color from here.
+     They are now handled by the global.css input { ... } block.
   */
   input,
   textarea {
@@ -97,9 +98,13 @@ import Layout from "../layouts/BaseLayout.astro";
     outline: none;
   }
 
+  /* The placeholder logic is also removed from here 
+     to allow global.css to use the lighter --placeholder-color.
+  */
+
   button {
-    background: var(--text);
-    color: var(--bg);
+    background: var(--text); /* Solid block (Black in Light, White in Dark) */
+    color: var(--bg); /* Inverted text */
     border: none;
     padding: 1rem;
     font-family: var(--font-mono);

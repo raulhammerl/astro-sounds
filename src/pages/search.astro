@@ -1,21 +1,20 @@
 ---
-import BaseLayout from '../layouts/BaseLayout.astro';
-import PostCard from '../components/PostCard.astro';
-import { supabase } from '../lib/supabase';
+import BaseLayout from "../layouts/BaseLayout.astro";
+import PostCard from "../components/PostCard.astro";
+import { supabase } from "../lib/supabase";
 
-// 1. Extract the search term from the URL (e.g., /search?q=aphex)
-const searchTerm = Astro.url.searchParams.get('q') || '';
-
+const searchTerm = Astro.url.searchParams.get("q") || "";
 let posts = [];
 let hasSearched = searchTerm.length > 0;
 
 if (hasSearched) {
   const { data, error } = await supabase
-    .from('posts')
-    .select('*')
-    // Search across Artist, Title, and Description
-    .or(`artist.ilike.%${searchTerm}%,title.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`)
-    .order('created_at', { ascending: false });
+    .from("posts")
+    .select("*")
+    .or(
+      `artist.ilike.%${searchTerm}%,title.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`,
+    )
+    .order("created_at", { ascending: false });
 
   if (!error) posts = data;
 }
@@ -24,13 +23,15 @@ if (hasSearched) {
 <BaseLayout title="SYSTEM_SEARCH">
   <main class="search-page">
     <section class="search-header">
-      <div class="terminal-label">-- DATABASE_QUERY -----------------------------</div>
-      
+      <div class="terminal-label">
+        -- DATABASE_QUERY -----------------------------
+      </div>
+
       <form action="/search" method="GET" class="search-form">
-        <input 
-          type="text" 
-          name="q" 
-          placeholder="TYPE_KEYWORDS_AND_PRESS_ENTER..." 
+        <input
+          type="text"
+          name="q"
+          placeholder="TYPE_KEYWORDS_AND_PRESS_ENTER..."
           value={searchTerm}
           required
           autofocus
@@ -40,65 +41,111 @@ if (hasSearched) {
     </section>
 
     <div class="results-area">
-      {hasSearched ? (
-        <>
-          <div class="status-bar">
-            FOUND: {posts.length} MATCHES_FOR "{searchTerm.toUpperCase()}"
-          </div>
-          
-          <ul class="posts-listing">
-            {posts.map((post) => (
-              <li>
-                <PostCard post={post} />
-              </li>
-            ))}
-          </ul>
-          
-          {posts.length === 0 && (
-            <div class="empty-state">
-              <p>NO_DATA_MATCHES_CRITERIA_</p>
-              <a href="/search" class="reset-link">[CLEAR_SEARCH]</a>
+      {
+        hasSearched ? (
+          <>
+            <div class="status-bar">
+              FOUND: {posts.length} MATCHES_FOR "{searchTerm.toUpperCase()}"
             </div>
-          )}
-        </>
-      ) : (
-        <div class="pre-search">
-          <p class="hint">Search by artist, track name, or description keywords.</p>
-        </div>
-      )}
+
+            <ul class="posts-listing">
+              {posts.map((post) => (
+                <li>
+                  <PostCard post={post} />
+                </li>
+              ))}
+            </ul>
+
+            {posts.length === 0 && (
+              <div class="empty-state">
+                <p>NO_DATA_MATCHES_CRITERIA_</p>
+                <a href="/search" class="reset-link">
+                  [CLEAR_SEARCH]
+                </a>
+              </div>
+            )}
+          </>
+        ) : (
+          <div class="pre-search">
+            <p class="hint">
+              Search by artist, track name, or description keywords.
+            </p>
+          </div>
+        )
+      }
     </div>
   </main>
 </BaseLayout>
 
 <style>
-  .search-page { max-width: 800px; margin: 4rem auto; padding: 0 1.5rem; font-family: var(--font-mono); }
-  
-  .terminal-label { font-size: 0.7rem; color: #888; margin-bottom: 1.5rem; }
+  /* 1. Base Variables (Light Mode) */
+  .search-page {
+    --search-border: #000;
+    --search-text: #000;
+    --search-hint: #bcbcbc;
+
+    max-width: 800px;
+    margin: 4rem auto;
+    padding: 0 1.5rem;
+    font-family: var(--font-mono);
+    color: var(--search-text);
+    transition: color 0.3s ease;
+  }
+
+  /* 2. Dark Mode Overrides */
+  /* We use :global to look at the <html> tag's data-theme attribute */
+  :global([data-theme="dark"]) .search-page {
+    --search-border: #fff;
+    --search-text: #fff;
+    --search-hint: #666;
+  }
+
+  .terminal-label {
+    font-size: 0.7rem;
+    color: #888;
+    margin-bottom: 1.5rem;
+  }
 
   .search-form input {
     width: 100%;
     background: transparent;
     border: none;
-    border-bottom: 3px solid #000;
+    border-bottom: 3px solid var(--search-border);
     font-family: var(--font-mono);
     font-size: 2rem;
     padding: 1rem 0;
     outline: none;
     text-transform: uppercase;
+    color: var(--search-text);
+    transition:
+      border-color 0.3s ease,
+      color 0.3s ease;
   }
 
-  .status-bar { margin: 2rem 0; font-size: 0.75rem; font-weight: 800; color: #666; }
+  .status-bar {
+    margin: 2rem 0;
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: #666;
+  }
+  .posts-listing {
+    list-style: none;
+    padding: 0;
+    margin-top: 2rem;
+  }
 
-  .posts-listing { list-style: none; padding: 0; margin-top: 2rem; }
-
-  .pre-search, .empty-state {
+  .pre-search,
+  .empty-state {
     margin-top: 4rem;
     text-align: center;
-    color: #bcbcbc;
+    color: var(--search-hint);
   }
 
-  .pre-search p { font-size: 1.2rem; font-weight: 800; }
-  .hint { font-size: 0.8rem; margin-top: 0.5rem; }
-  
-  .reset-link { color: #000; text-decoration: underline; font-weight: 800; display: block; margin-top: 1rem; }
+  .reset-link {
+    color: var(--search-text);
+    text-decoration: underline;
+    font-weight: 800;
+    display: block;
+    margin-top: 1rem;
+  }
 </style>
