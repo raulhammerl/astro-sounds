@@ -7,9 +7,17 @@
   --border-light: #f0f0f0;
 }
 
+[data-theme='dark'] {
+  --bg-primary: #0f172a;
+  --bg-secondary: #1e293b;
+  --text-color: #f8fafc;
+  --border-color: #334155;
+}
+
 body {
-  background-color: var(--bg);
-  color: var(--text);
+  background-color: var(--bg-primary);
+  color: var(--text-color);
+  transition: background-color 0.3s ease, color 0.3s ease;
   font-family: var(--font-mono);
   margin: 0;
   display: flex;

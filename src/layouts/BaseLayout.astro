@@ -22,6 +22,9 @@ const { title = "Sounds" } = Astro.props;
           <a href="/" class="page-link">[FEED]</a>
           <a href="/search" class="page-link">[SEARCH]</a>
           <a href="/about" class="page-link">[INFO]</a>
+          <button id="theme-toggle" class="page-link" style="background: none; border: none; cursor: pointer; font-family: inherit; font-size: inherit;">
+          [<span id="theme-text">DARK</span>]
+        </button>
         </nav>
         <div class="separator">------------------------------------------------------------</div>
       </header>
@@ -32,3 +35,25 @@ const { title = "Sounds" } = Astro.props;
     </div>
   </body>
 </html>
+
+<script is:inline>
+  const themeToggle = document.getElementById("theme-toggle");
+  const themeText = document.getElementById("theme-text");
+
+  function updateTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    // If theme is dark, the button should offer to switch to LIGHT
+    themeText.innerText = theme === 'dark' ? "LIGHT" : "DARK";
+    localStorage.setItem('theme', theme);
+  }
+
+  themeToggle.addEventListener("click", () => {
+    const currentTheme = document.documentElement.getAttribute('data-theme');
+    updateTheme(currentTheme === 'dark' ? 'light' : 'dark');
+  });
+
+  // Sync with system changes
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+    updateTheme(e.matches ? 'dark' : 'light');
+  });
+</script>
