@@ -1,59 +1,85 @@
 ---
-import '../styles/global.css';
+import "../styles/global.css";
 const { title = "Sounds" } = Astro.props;
 ---
 
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{title}</title>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&display=swap" rel="stylesheet">
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&display=swap"
+      rel="stylesheet"
+    />
+
+    <script is:inline>
+      const theme = (() => {
+        if (
+          typeof localStorage !== "undefined" &&
+          localStorage.getItem("theme")
+        ) {
+          return localStorage.getItem("theme");
+        }
+        if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+          return "dark";
+        }
+        return "light";
+      })();
+      document.documentElement.setAttribute("data-theme", theme);
+    </script>
   </head>
-  
+
   <body>
     <div class="centered-container">
       <header class="site-header">
         <a href="/" class="site-title">SOUNDS</a>
-        <div class="separator">------------------------------------------------------------</div>
+        <div class="separator">
+          ------------------------------------------------------------
+        </div>
         <nav class="links">
-  <a href="/" class="page-link">[FEED]</a>
-  <a href="/search" class="page-link">[SEARCH]</a>
-  <a href="/about" class="page-link">[INFO]</a>
-  <button id="theme-toggle" class="page-link">
-    [<span id="theme-text">DARK</span>]
-  </button>
-</nav>
-        <div class="separator">------------------------------------------------------------</div>
+          <a href="/" class="page-link">[FEED]</a>
+          <a href="/search" class="page-link">[SEARCH]</a>
+          <a href="/about" class="page-link">[INFO]</a>
+
+          <button id="theme-toggle" class="page-link">
+            [<span id="theme-text">THEME</span>]
+          </button>
+        </nav>
+        <div class="separator">
+          ------------------------------------------------------------
+        </div>
       </header>
 
       <main class="page-content">
         <slot />
       </main>
     </div>
+
+    <script>
+      const toggle = document.getElementById("theme-toggle");
+      const themeText = document.getElementById("theme-text");
+
+      const updateText = (theme) => {
+        if (themeText) {
+          themeText.innerText = theme === "dark" ? "LIGHT" : "DARK";
+        }
+      };
+
+      // Set initial text
+      updateText(document.documentElement.getAttribute("data-theme"));
+
+      toggle?.addEventListener("click", () => {
+        const currentTheme =
+          document.documentElement.getAttribute("data-theme");
+        const newTheme = currentTheme === "dark" ? "light" : "dark";
+
+        document.documentElement.setAttribute("data-theme", newTheme);
+        localStorage.setItem("theme", newTheme);
+        updateText(newTheme);
+      });
+    </script>
   </body>
 </html>
-
-<script is:inline>
-  const themeToggle = document.getElementById("theme-toggle");
-  const themeText = document.getElementById("theme-text");
-
-  function updateTheme(theme) {
-    document.documentElement.setAttribute('data-theme', theme);
-    // If theme is dark, the button should offer to switch to LIGHT
-    themeText.innerText = theme === 'dark' ? "LIGHT" : "DARK";
-    localStorage.setItem('theme', theme);
-  }
-
-  themeToggle.addEventListener("click", () => {
-    const currentTheme = document.documentElement.getAttribute('data-theme');
-    updateTheme(currentTheme === 'dark' ? 'light' : 'dark');
-  });
-
-  // Sync with system changes
-  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
-    updateTheme(e.matches ? 'dark' : 'light');
-  });
-  </script>
