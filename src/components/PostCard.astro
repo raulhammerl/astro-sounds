@@ -4,9 +4,17 @@ import Comments from "./Comments.astro";
 
 const { post } = Astro.props;
 
-// 1. Data mapping from Supabase object
-const { artist, title, youtube_url, description, posted_by, created_at, slug } =
-  post;
+// 1. Added embed_code to the mapping
+const {
+  artist,
+  title,
+  youtube_url,
+  embed_code,
+  description,
+  posted_by,
+  created_at,
+  slug,
+} = post;
 
 // 2. Helper to get the 11-character YouTube ID from a full URL
 const getYoutubeId = (url) => {
@@ -42,7 +50,8 @@ const formattedDate = created_at
   </div>
 
   {
-    youtubeId && (
+    /* Prioritize YouTube placeholder logic if ID exists, else render raw HTML */
+    youtubeId ? (
       <div
         class="video-placeholder"
         data-id={youtubeId}
@@ -51,7 +60,9 @@ const formattedDate = created_at
         <img src={thumbnailUrl} alt={title} loading="lazy" />
         <div class="play-button">▶</div>
       </div>
-    )
+    ) : embed_code ? (
+      <div class="raw-embed-container" set:html={embed_code} />
+    ) : null
   }
 
   {description && <p class="post-description">{description}</p>}
@@ -105,6 +116,19 @@ const formattedDate = created_at
     width: 100%;
   }
 
+  /* Added styling for raw embeds to ensure they don't break layout */
+  .raw-embed-container {
+    width: 100%;
+    max-width: 750px; /* Matching the description width for consistency */
+    display: flex;
+    justify-content: center;
+  }
+
+  .raw-embed-container :global(iframe) {
+    width: 100% !important;
+    border: none;
+  }
+
   .post-meta {
     font-size: 0.8rem;
     margin-bottom: 1rem;
@@ -125,7 +149,6 @@ const formattedDate = created_at
     font-family: var(--font-mono);
   }
 
-  /* Artist is prominent, Track Title uses the muted variable for contrast */
   .artist {
     color: var(--text);
   }
@@ -141,14 +164,15 @@ const formattedDate = created_at
     margin-top: 1.5rem;
     font-size: 0.95rem;
     line-height: 1.6;
-    max-width: 650px;
-    color: var(--text); /* description now adapts to theme */
+    max-width: 750px;
+    color: var(--text);
   }
 
   .video-placeholder {
     width: 100%;
+    max-width: 750px; /* Added max-width to match the layout better */
     aspect-ratio: 16 / 9;
-    background: #000; /* Keep background black for video feel */
+    background: #000;
     cursor: pointer;
     position: relative;
     display: flex;
@@ -161,7 +185,7 @@ const formattedDate = created_at
     width: 100%;
     height: 100%;
     object-fit: cover;
-    opacity: 0.7; /* Slightly dimmer to fit the dark theme better */
+    opacity: 0.7;
     transition: opacity 0.2s ease;
   }
 
@@ -169,7 +193,6 @@ const formattedDate = created_at
     opacity: 1;
   }
 
-  /* Play button uses accent variables for high-contrast inverting */
   .play-button {
     position: absolute;
     width: 60px;
