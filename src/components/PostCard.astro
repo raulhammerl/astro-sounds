@@ -4,7 +4,6 @@ import Comments from "./Comments.astro";
 
 const { post } = Astro.props;
 
-// 1. Data mapping
 const {
   artist,
   title,
@@ -16,7 +15,6 @@ const {
   slug,
 } = post;
 
-// 2. Helper to get YouTube ID
 const getYoutubeId = (url) => {
   if (!url) return null;
   const regExp =
@@ -26,9 +24,10 @@ const getYoutubeId = (url) => {
 };
 
 const youtubeId = getYoutubeId(youtube_url);
-const thumbnailUrl = `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`;
+const thumbnailUrl = youtubeId
+  ? `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`
+  : null;
 
-// 3. Format Date
 const formattedDate = created_at
   ? new Date(created_at).toLocaleDateString("en-GB", {
       day: "2-digit",
@@ -178,8 +177,12 @@ const formattedDate = created_at
     line-height: 1.6;
     max-width: 750px;
     color: var(--text);
+    /* Ensure long descriptions don't look like headlines */
+    text-transform: none;
+    font-weight: 400;
   }
 
+  /* ... rest of your existing CSS ... */
   .video-placeholder {
     width: 100%;
     max-width: 750px;
@@ -192,7 +195,6 @@ const formattedDate = created_at
     justify-content: center;
     overflow: hidden;
   }
-
   .video-placeholder img {
     width: 100%;
     height: 100%;
@@ -200,11 +202,9 @@ const formattedDate = created_at
     opacity: 0.7;
     transition: opacity 0.2s ease;
   }
-
   .video-placeholder:hover img {
     opacity: 1;
   }
-
   .play-button {
     position: absolute;
     width: 60px;
@@ -220,15 +220,36 @@ const formattedDate = created_at
     pointer-events: none;
     transition: all 0.2s ease;
   }
-
   .video-placeholder:hover .play-button {
     background: var(--accent);
     color: var(--accent-inv);
     border-color: var(--accent-inv);
   }
-
   .video-placeholder :global(iframe) {
     width: 100%;
     height: 100%;
+    max-width: 750px;
+    display: flex;
+    justify-content: center;
+  }
+  .raw-embed-container {
+    width: 100%;
+    height: 100%;
+    max-width: 750px;
+    display: flex;
+    justify-content: center;
+  }
+  .raw-embed-container :global(iframe) {
+    width: 100% !important;
+    border: none;
+  }
+  .post-meta {
+    font-size: 0.8rem;
+    margin-bottom: 1rem;
+    background: var(--meta-bg);
+    color: var(--meta-text);
+    padding: 2px 8px;
+    font-weight: 700;
+    text-transform: uppercase;
   }
 </style>

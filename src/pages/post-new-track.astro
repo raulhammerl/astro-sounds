@@ -19,12 +19,24 @@ import Layout from "../layouts/BaseLayout.astro";
       <div class="row">
         <div class="input-group">
           <label>ARTIST_NAME</label>
-          <input type="text" name="artist" required placeholder="APEX TWIN" />
+          <input
+            type="text"
+            name="artist"
+            required
+            placeholder="APEX TWIN"
+            autocomplete="off"
+          />
         </div>
 
         <div class="input-group">
           <label>TRACK_TITLE</label>
-          <input type="text" name="title" required placeholder="XMAS_EVET10" />
+          <input
+            type="text"
+            name="track_title"
+            required
+            placeholder="XMAS_EVET10"
+            autocomplete="off"
+          />
         </div>
       </div>
 
@@ -50,8 +62,10 @@ import Layout from "../layouts/BaseLayout.astro";
 
       <div class="input-group">
         <label>DESCRIPTION</label>
-        <textarea name="description" rows="4" placeholder="SYSTEM_NOTES..."
-        ></textarea>
+        <textarea
+          name="track_description"
+          rows="4"
+          placeholder="SYSTEM_NOTES..."></textarea>
       </div>
 
       <button type="submit" id="submit-btn">[BROADCAST_TO_FEED]</button>
@@ -158,7 +172,6 @@ import Layout from "../layouts/BaseLayout.astro";
   import { supabase } from "../lib/supabase";
   import { getUser } from "../lib/identity";
 
-  // Elements cast to their types
   const btnYoutube = document.getElementById(
     "btn-youtube",
   ) as HTMLButtonElement;
@@ -199,19 +212,19 @@ import Layout from "../layouts/BaseLayout.astro";
     }
   };
 
-  btnYoutube.onclick = () => setMode("youtube");
-  btnOther.onclick = () => setMode("other");
+  if (btnYoutube) btnYoutube.onclick = () => setMode("youtube");
+  if (btnOther) btnOther.onclick = () => setMode("other");
 
   form.onsubmit = async (e) => {
     e.preventDefault();
     const formData = new FormData(form);
 
-    const artist = formData.get("artist") as string;
-    const title = formData.get("title") as string;
-    const description = formData.get("description") as string;
-    const posted_by = getUser() || "ANONYMOUS";
+    // Explicitly mapping variables with distinct names
+    const artistVal = formData.get("artist") as string;
+    const titleVal = formData.get("track_title") as string;
+    const descVal = formData.get("track_description") as string;
+    const postedBy = getUser() || "ANONYMOUS";
 
-    // Explicitly initialize with null, then update
     let youtube_url: string | null = null;
     let embed_code: string | null = null;
 
@@ -221,17 +234,27 @@ import Layout from "../layouts/BaseLayout.astro";
       embed_code = formData.get("embed_code") as string;
     }
 
-    const slug = `${artist}-${title}`.toLowerCase().replace(/[^a-z0-9]/g, "-");
+    const slug = `${artistVal}-${titleVal}`
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, "-")
+      .replace(/-+/g, "-");
+
+    // LOG THIS TO CONSOLE TO VERIFY BEFORE IT HITS SUPABASE
+    console.log("SENDING_PAYLOAD:", {
+      artist: artistVal,
+      title: titleVal,
+      description: descVal,
+    });
 
     const { error } = await supabase.from("posts").insert([
       {
-        artist,
-        title,
-        slug,
-        youtube_url,
-        embed_code,
-        description,
-        posted_by,
+        artist: artistVal,
+        title: titleVal, // Maps correctly to 'title' column
+        description: descVal, // Maps correctly to 'description' column
+        slug: slug,
+        youtube_url: youtube_url,
+        embed_code: embed_code,
+        posted_by: postedBy,
       },
     ]);
 
@@ -239,7 +262,8 @@ import Layout from "../layouts/BaseLayout.astro";
       alert("SUCCESS: DATA_TRANSMITTED");
       window.location.href = "/";
     } else {
-      alert("ERROR: " + error.message);
+      console.error("Supabase Error:", error);
+      alert("DATABASE_ERROR: " + error.message);
     }
   };
 </script>
