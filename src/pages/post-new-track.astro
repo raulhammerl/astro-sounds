@@ -5,7 +5,14 @@ import Layout from "../layouts/BaseLayout.astro";
 <Layout title="POST_NEW_TRACK">
   <main class="admin-container">
     <div class="terminal-header">
-      -- CONTRIBUTION ----------------------------
+      -- CONTRIBUTION_MODULE -----------------------
+    </div>
+
+    <div class="mode-switcher">
+      <button type="button" id="btn-youtube" class="active"
+        >USE_YOUTUBE_URL</button
+      >
+      <button type="button" id="btn-other">USE_RAW_EMBED</button>
     </div>
 
     <form id="post-form" class="brutalist-form">
@@ -21,23 +28,33 @@ import Layout from "../layouts/BaseLayout.astro";
         </div>
       </div>
 
-      <div class="input-group">
+      <div id="youtube-section" class="input-group">
         <label>YOUTUBE_URL</label>
         <input
           type="url"
           name="youtube_url"
+          id="input-youtube"
           required
           placeholder="https://www.youtube.com/watch?v=..."
         />
       </div>
 
+      <div id="other-section" class="input-group hidden">
+        <label>RAW_EMBED_CODE (IFRAME)</label>
+        <textarea
+          name="embed_code"
+          id="input-other"
+          rows="3"
+          placeholder='<iframe src="..."></iframe>'></textarea>
+      </div>
+
       <div class="input-group">
         <label>DESCRIPTION</label>
-        <textarea name="description" rows="4" placeholder="Post that sound"
+        <textarea name="description" rows="4" placeholder="SYSTEM_NOTES..."
         ></textarea>
       </div>
 
-      <button type="submit" id="submit-btn">[BROADCAST]</button>
+      <button type="submit" id="submit-btn">[BROADCAST_TO_FEED]</button>
     </form>
 
     <div id="status-msg" class="hidden"></div>
@@ -49,18 +66,39 @@ import Layout from "../layouts/BaseLayout.astro";
     max-width: 600px;
     margin: 4rem auto;
     padding: 2rem;
-    /* Uses var(--text) so the border is sharp white in dark mode */
-    border: 1px solid var(--text);
+    border: 2px solid var(--text);
     background: var(--bg);
-    transition: all 0.3s ease;
   }
 
   .terminal-header {
     font-family: var(--font-mono);
-    font-weight: 800;
+    font-size: 0.8rem;
     margin-bottom: 2rem;
-    /* Updated to use var(--text) so it matches the "SOUNDS" title and separators */
     color: var(--text);
+  }
+
+  .mode-switcher {
+    display: flex;
+    margin-bottom: 2rem;
+    border: 1px solid var(--text);
+  }
+
+  .mode-switcher button {
+    flex: 1;
+    background: transparent;
+    color: var(--text);
+    border: none;
+    padding: 0.75rem;
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    font-weight: 800;
+    cursor: pointer;
+    text-transform: uppercase;
+  }
+
+  .mode-switcher button.active {
+    background: var(--text);
+    color: var(--bg);
   }
 
   .brutalist-form {
@@ -68,68 +106,45 @@ import Layout from "../layouts/BaseLayout.astro";
     flex-direction: column;
     gap: 1.5rem;
   }
-
   .row {
     display: flex;
     gap: 1rem;
   }
-
   .input-group {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
-    flex: 1;
   }
 
   label {
     font-family: var(--font-mono);
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     font-weight: 900;
     color: var(--text);
   }
 
-  /* We've removed border, background, and color from here.
-     They are now handled by the global.css input { ... } block.
-  */
   input,
   textarea {
     padding: 0.8rem;
-    font-size: 0.9rem;
+    font-family: var(--font-mono);
+    border: 1px solid var(--text);
+    background: var(--bg);
+    color: var(--text);
     outline: none;
   }
 
-  /* The placeholder logic is also removed from here 
-     to allow global.css to use the lighter --placeholder-color.
-  */
-
-  button {
-    background: var(--text); /* Solid block (Black in Light, White in Dark) */
-    color: var(--bg); /* Inverted text */
+  #submit-btn {
+    background: var(--text);
+    color: var(--bg);
     border: none;
-    padding: 1rem;
-    font-family: var(--font-mono);
+    padding: 1.2rem;
     font-weight: 800;
     cursor: pointer;
-    transition: all 0.2s;
-  }
-
-  button:hover {
-    background: var(--accent);
-    color: var(--accent-inv);
+    margin-top: 1rem;
   }
 
   .hidden {
-    display: none;
-    margin-top: 1rem;
-    font-family: var(--font-mono);
-    font-size: 0.8rem;
-  }
-
-  #status-msg {
-    padding: 1rem;
-    border: 1px solid var(--text);
-    color: var(--text);
-    background: var(--meta-bg);
+    display: none !important;
   }
 
   @media (max-width: 600px) {
@@ -143,23 +158,70 @@ import Layout from "../layouts/BaseLayout.astro";
   import { supabase } from "../lib/supabase";
   import { getUser } from "../lib/identity";
 
+  // Elements cast to their types
+  const btnYoutube = document.getElementById(
+    "btn-youtube",
+  ) as HTMLButtonElement;
+  const btnOther = document.getElementById("btn-other") as HTMLButtonElement;
+  const sectionYoutube = document.getElementById(
+    "youtube-section",
+  ) as HTMLDivElement;
+  const sectionOther = document.getElementById(
+    "other-section",
+  ) as HTMLDivElement;
+  const inputYoutube = document.getElementById(
+    "input-youtube",
+  ) as HTMLInputElement;
+  const inputOther = document.getElementById(
+    "input-other",
+  ) as HTMLTextAreaElement;
   const form = document.getElementById("post-form") as HTMLFormElement;
-  const statusMsg = document.getElementById("status-msg");
 
-  form?.addEventListener("submit", async (e) => {
+  let mode: "youtube" | "other" = "youtube";
+
+  // Toggle Function
+  const setMode = (newMode: "youtube" | "other") => {
+    mode = newMode;
+    if (mode === "youtube") {
+      btnYoutube?.classList.add("active");
+      btnOther?.classList.remove("active");
+      sectionYoutube?.classList.remove("hidden");
+      sectionOther?.classList.add("hidden");
+      if (inputYoutube) inputYoutube.required = true;
+      if (inputOther) inputOther.required = false;
+    } else {
+      btnOther?.classList.add("active");
+      btnYoutube?.classList.remove("active");
+      sectionOther?.classList.remove("hidden");
+      sectionYoutube?.classList.add("hidden");
+      if (inputOther) inputOther.required = true;
+      if (inputYoutube) inputYoutube.required = false;
+    }
+  };
+
+  btnYoutube.onclick = () => setMode("youtube");
+  btnOther.onclick = () => setMode("other");
+
+  form.onsubmit = async (e) => {
     e.preventDefault();
-    const formData = new FormData(e.target as HTMLFormElement);
+    const formData = new FormData(form);
 
     const artist = formData.get("artist") as string;
     const title = formData.get("title") as string;
-    const youtube_url = formData.get("youtube_url") as string;
     const description = formData.get("description") as string;
-    const posted_by = getUser() || "ANONYMOUS_USER";
+    const posted_by = getUser() || "ANONYMOUS";
 
-    const slug = `${artist}-${title}`
-      .toLowerCase()
-      .replace(/[^a-z0-9]/g, "-")
-      .replace(/-+/g, "-");
+    // Explicitly initialize with null, then update
+    let youtube_url: string | null = null;
+    let embed_code: string | null = null;
+
+    if (mode === "youtube") {
+      youtube_url = formData.get("youtube_url") as string;
+    } else {
+      embed_code = formData.get("embed_code") as string;
+    }
+
+    const slug = `${artist}-${title}`.toLowerCase().replace(/[^a-z0-9]/g, "-");
 
     const { error } = await supabase.from("posts").insert([
       {
@@ -167,23 +229,17 @@ import Layout from "../layouts/BaseLayout.astro";
         title,
         slug,
         youtube_url,
+        embed_code,
         description,
         posted_by,
       },
     ]);
 
-    if (error) {
-      if (statusMsg) {
-        statusMsg.textContent = "ERROR: " + error.message;
-        statusMsg.classList.remove("hidden");
-      }
+    if (!error) {
+      alert("SUCCESS: DATA_TRANSMITTED");
+      window.location.href = "/";
     } else {
-      if (statusMsg) {
-        statusMsg.textContent = "SUCCESS: TRACK_ADDED_TO_DATABASE";
-        statusMsg.classList.remove("hidden");
-        form.reset();
-        setTimeout(() => (window.location.href = "/"), 2000);
-      }
+      alert("ERROR: " + error.message);
     }
-  });
+  };
 </script>
