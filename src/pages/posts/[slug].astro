@@ -1,42 +1,74 @@
 ---
-import { getCollection } from 'astro:content';
-import BaseLayout from '../../layouts/BaseLayout.astro';
-import PostCard from '../../components/PostCard.astro';
+// src/pages/posts/[slug].astro
+import { supabase } from "../../lib/supabase";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import PostCard from "../../components/PostCard.astro";
 
-// 1. Generate a new path for every individual post
-export async function getStaticPaths() {
-  const blogEntries = await getCollection('blog');
-  return blogEntries.map(entry => ({
-    params: { slug: entry.slug }, props: { entry },
-  }));
+// 1. Get the slug from the URL
+const { slug } = Astro.params;
+
+// 2. Fetch the specific post from Supabase using the slug
+const { data: post, error } = await supabase
+  .from("posts")
+  .select("*")
+  .eq("slug", slug)
+  .single(); // We only want one result
+
+// 3. Handle 404 if post doesn't exist
+if (error || !post) {
+  return Astro.redirect("/404");
 }
-
-// 2. Get the post data from props
-const { entry } = Astro.props;
 ---
 
-<BaseLayout title={entry.data.title}>
-  <div class="single-post-wrapper">
-    <a href="/" class="back-link">← Back to Feed</a>
-    
-    <PostCard post={entry} />
-  </div>
+<BaseLayout title={`${post.artist} - ${post.title}`}>
+  <main class="single-post-wrapper">
+    <div class="navigation-header">
+      <a href="/" class="back-link">
+        <span class="arrow">←</span> [RETURN_TO_FEED]
+      </a>
+      <div class="system-label">
+        TRACK_ID: {post.id.toString().padStart(4, "0")}
+      </div>
+    </div>
+
+    <PostCard post={post} />
+  </main>
 </BaseLayout>
 
 <style>
   .single-post-wrapper {
-    margin-top: 2rem;
+    max-width: 800px;
+    margin: 4rem auto;
+    padding: 0 1rem;
   }
+
+  .navigation-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 3rem;
+    font-family: var(--font-mono);
+  }
+
   .back-link {
-    display: inline-block;
-    margin-bottom: 2rem;
     text-decoration: none;
-    color: var(--muted, #666);
-    font-size: 0.9rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    font-weight: 700;
+    transition: color 0.2s ease;
   }
+
   .back-link:hover {
-    color: var(--text, #111);
+    color: var(--text);
+  }
+
+  .arrow {
+    margin-right: 0.5rem;
+  }
+
+  .system-label {
+    font-size: 0.7rem;
+    color: var(--separator-color);
+    letter-spacing: 0.1em;
   }
 </style>
