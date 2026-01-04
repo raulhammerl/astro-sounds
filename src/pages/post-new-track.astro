@@ -1,0 +1,111 @@
+---
+import Layout from '../layouts/BaseLayout.astro';
+---
+
+<Layout title="POST_NEW_TRACK">
+  <main class="admin-container">
+    <div class="terminal-header">-- CONTRIBUTION ----------------------------</div>
+    
+    <form id="post-form" class="brutalist-form">
+      <div class="row">
+        <div class="input-group">
+          <label>ARTIST_NAME</label>
+          <input type="text" name="artist" required placeholder="APEX TWIN" />
+        </div>
+
+        <div class="input-group">
+          <label>TRACK_TITLE</label>
+          <input type="text" name="title" required placeholder="XMAS_EVET10" />
+        </div>
+      </div>
+
+      <div class="input-group">
+        <label>YOUTUBE_URL</label>
+        <input type="url" name="youtube_url" required placeholder="https://www.youtube.com/watch?v=..." />
+      </div>
+
+      <div class="input-group">
+        <label>DESCRIPTION</label>
+        <textarea name="description" rows="4" placeholder="Post that sound"></textarea>
+      </div>
+
+      <button type="submit" id="submit-btn">[BROADCAST]</button>
+    </form>
+    
+    <div id="status-msg" class="hidden"></div>
+  </main>
+</Layout>
+
+<style>
+  .admin-container { max-width: 600px; margin: 4rem auto; padding: 2rem; border: 1px solid #000; }
+  .terminal-header { font-family: var(--font-mono); font-weight: 800; margin-bottom: 2rem; color: #888; }
+  
+  .brutalist-form { display: flex; flex-direction: column; gap: 1.5rem; }
+  .input-group { display: flex; flex-direction: column; gap: 0.5rem; }
+  
+  label { font-family: var(--font-mono); font-size: 0.75rem; font-weight: 900; }
+  
+  input, textarea {
+    border: 1px solid #bcbcbc;
+    padding: 0.8rem;
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    background: #fff;
+    outline: none;
+  }
+
+  button {
+    background: #000;
+    color: #fff;
+    border: none;
+    padding: 1rem;
+    font-family: var(--font-mono);
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  button:hover { background: #333; }
+  .hidden { display: none; margin-top: 1rem; font-family: var(--font-mono); font-size: 0.8rem; }
+</style>
+
+<script>
+  import { supabase } from '../lib/supabase';
+  import { getUser } from '../lib/identity';
+
+  const form = document.getElementById('post-form');
+  const statusMsg = document.getElementById('status-msg');
+
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    
+    // 1. Grab the artist from the form
+    const artist = formData.get('artist'); 
+    const title = formData.get('title');
+    const youtube_url = formData.get('youtube_url');
+    const description = formData.get('description');
+    const posted_by = getUser() || "ANONYMOUS_USER";
+    
+    const slug = `${artist}-${title}`.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-');
+
+    const { error } = await supabase.from('posts').insert([{
+      artist, 
+      title,
+      slug,
+      youtube_url,
+      description,
+      posted_by
+    }]);
+
+    if (error) {
+      statusMsg.textContent = "ERROR: " + error.message;
+      statusMsg.classList.remove('hidden');
+    } else {
+      statusMsg.textContent = "SUCCESS: TRACK_ADDED_TO_DATABASE";
+      statusMsg.classList.remove('hidden');
+      form.reset();
+      setTimeout(() => window.location.href = '/', 2000);
+    }
+  });
+</script>
