@@ -116,7 +116,6 @@ const formattedDate = created_at
     width: 100%;
   }
 
-  /* Ensure the link doesn't look like a standard link */
   .post-link {
     text-decoration: none;
     color: inherit;
@@ -145,9 +144,10 @@ const formattedDate = created_at
     margin-bottom: 1rem;
     background: var(--meta-bg);
     color: var(--meta-text);
-    padding: 2px 8px;
+    padding: 4px 10px;
     font-weight: 700;
     text-transform: uppercase;
+    font-family: var(--font-mono);
   }
 
   .post-title-container {
@@ -177,12 +177,10 @@ const formattedDate = created_at
     line-height: 1.6;
     max-width: 750px;
     color: var(--text);
-    /* Ensure long descriptions don't look like headlines */
     text-transform: none;
     font-weight: 400;
   }
 
-  /* ... rest of your existing CSS ... */
   .video-placeholder {
     width: 100%;
     max-width: 750px;
@@ -243,13 +241,15 @@ const formattedDate = created_at
     width: 100% !important;
     border: none;
   }
-  .post-meta {
-    font-size: 0.8rem;
-    margin-bottom: 1rem;
-    background: var(--meta-bg);
-    color: var(--meta-text);
-    padding: 2px 8px;
-    font-weight: 700;
-    text-transform: uppercase;
+
+  /* Specific Dark Mode overrides */
+  :global([data-theme="dark"]) .post-meta {
+    background: #1beb9e; /* Slate Blue */
+    color: #7484ab; /* Lighter grey text */
+    border: none;
+  }
+
+  :global([data-theme="dark"]) .track-title {
+    color: #1beb9e; /* Neon Green title */
   }
 </style>
