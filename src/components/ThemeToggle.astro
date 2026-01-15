@@ -15,8 +15,7 @@
     font-size: 0.7rem;
   }
 
-  /* Logic: Hide the opposite label */
-  /* When Light: Hide "To Light" */
+  /* Logic: CSS handles the button text based on the data-theme attribute */
   .text-to-light {
     display: none;
   }
@@ -24,35 +23,41 @@
     display: inline;
   }
 
-  /* When Dark: Hide "To Dark", Show "To Light" */
-  :global([data-theme="dark"]) .text-to-dark {
+  :root[data-theme="dark"] .text-to-dark {
     display: none;
   }
-  :global([data-theme="dark"]) .text-to-light {
+  :root[data-theme="dark"] .text-to-light {
     display: inline;
   }
 </style>
 
-<script>
-  const toggle = document.getElementById("theme-toggle");
+<script is:inline>
+  function initTheme() {
+    const mq = window.matchMedia("(prefers-color-scheme: dark)");
+    const html = document.documentElement;
 
-  const updateTheme = (theme) => {
-    document.documentElement.setAttribute("data-theme", theme);
-    localStorage.setItem("theme", theme);
-  };
+    // 1. Instant System Sync (Your exact function logic)
+    const sync = (e) => {
+      html.setAttribute("data-theme", e.matches ? "dark" : "light");
+      localStorage.setItem("theme", ""); // Reset to sync mode
+    };
+    mq.addListener(sync);
 
-  toggle?.addEventListener("click", () => {
-    const isDark =
-      document.documentElement.getAttribute("data-theme") === "dark";
-    updateTheme(isDark ? "light" : "dark");
-  });
+    // 2. Manual Toggle Logic
+    document.getElementById("theme-toggle")?.addEventListener("click", () => {
+      const stored = localStorage.getItem("theme");
+      const isDark = stored ? stored === "dark" : mq.matches;
+      const next = isDark ? "light" : "dark";
 
-  // Sync with system changes
-  window
-    .matchMedia("(prefers-color-scheme: dark)")
-    .addEventListener("change", (e) => {
-      if (!localStorage.getItem("theme")) {
-        updateTheme(e.matches ? "dark" : "light");
-      }
+      html.setAttribute("data-theme", next);
+      localStorage.setItem("theme", next);
     });
+
+    // 3. Initial Load logic
+    const saved = localStorage.getItem("theme");
+    html.setAttribute("data-theme", saved || (mq.matches ? "dark" : "light"));
+  }
+
+  initTheme();
+  document.addEventListener("astro:after-swap", initTheme);
 </script>

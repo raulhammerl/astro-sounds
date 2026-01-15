@@ -4,11 +4,17 @@ import Comments from "./Comments.astro";
 
 const { post } = Astro.props;
 
-// 1. Data mapping from Supabase object
-const { artist, title, youtube_url, description, posted_by, created_at, slug } =
-  post;
+const {
+  artist,
+  title,
+  youtube_url,
+  embed_code,
+  description,
+  posted_by,
+  created_at,
+  slug,
+} = post;
 
-// 2. Helper to get the 11-character YouTube ID from a full URL
 const getYoutubeId = (url) => {
   if (!url) return null;
   const regExp =
@@ -18,9 +24,10 @@ const getYoutubeId = (url) => {
 };
 
 const youtubeId = getYoutubeId(youtube_url);
-const thumbnailUrl = `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`;
+const thumbnailUrl = youtubeId
+  ? `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`
+  : null;
 
-// 3. Format the Supabase timestamp
 const formattedDate = created_at
   ? new Date(created_at).toLocaleDateString("en-GB", {
       day: "2-digit",
@@ -36,13 +43,15 @@ const formattedDate = created_at
   </div>
 
   <div class="post-title-container">
-    <span class="artist">{artist}</span>
-    <span class="divider"> // </span>
-    <span class="track-title">{title}</span>
+    <a href={`/posts/${slug}`} class="post-link">
+      <span class="artist">{artist}</span>
+      <span class="divider"> // </span>
+      <span class="track-title">{title}</span>
+    </a>
   </div>
 
   {
-    youtubeId && (
+    youtubeId ? (
       <div
         class="video-placeholder"
         data-id={youtubeId}
@@ -51,7 +60,9 @@ const formattedDate = created_at
         <img src={thumbnailUrl} alt={title} loading="lazy" />
         <div class="play-button">▶</div>
       </div>
-    )
+    ) : embed_code ? (
+      <div class="raw-embed-container" set:html={embed_code} />
+    ) : null
   }
 
   {description && <p class="post-description">{description}</p>}
@@ -105,14 +116,38 @@ const formattedDate = created_at
     width: 100%;
   }
 
+  .post-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+  }
+
+  .post-link:hover .track-title {
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+  }
+
+  .raw-embed-container {
+    width: 100%;
+    max-width: 750px;
+    display: flex;
+    justify-content: center;
+  }
+
+  .raw-embed-container :global(iframe) {
+    width: 100% !important;
+    border: none;
+  }
+
   .post-meta {
     font-size: 0.8rem;
     margin-bottom: 1rem;
     background: var(--meta-bg);
     color: var(--meta-text);
-    padding: 2px 8px;
+    padding: 4px 10px;
     font-weight: 700;
     text-transform: uppercase;
+    font-family: var(--font-mono);
   }
 
   .post-title-container {
@@ -125,7 +160,6 @@ const formattedDate = created_at
     font-family: var(--font-mono);
   }
 
-  /* Artist is prominent, Track Title uses the muted variable for contrast */
   .artist {
     color: var(--text);
   }
@@ -141,14 +175,17 @@ const formattedDate = created_at
     margin-top: 1.5rem;
     font-size: 0.95rem;
     line-height: 1.6;
-    max-width: 650px;
-    color: var(--text); /* description now adapts to theme */
+    max-width: 750px;
+    color: var(--text);
+    text-transform: none;
+    font-weight: 400;
   }
 
   .video-placeholder {
     width: 100%;
+    max-width: 750px;
     aspect-ratio: 16 / 9;
-    background: #000; /* Keep background black for video feel */
+    background: #000;
     cursor: pointer;
     position: relative;
     display: flex;
@@ -156,20 +193,16 @@ const formattedDate = created_at
     justify-content: center;
     overflow: hidden;
   }
-
   .video-placeholder img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    opacity: 0.7; /* Slightly dimmer to fit the dark theme better */
+    opacity: 0.7;
     transition: opacity 0.2s ease;
   }
-
   .video-placeholder:hover img {
     opacity: 1;
   }
-
-  /* Play button uses accent variables for high-contrast inverting */
   .play-button {
     position: absolute;
     width: 60px;
@@ -185,15 +218,37 @@ const formattedDate = created_at
     pointer-events: none;
     transition: all 0.2s ease;
   }
-
   .video-placeholder:hover .play-button {
     background: var(--accent);
     color: var(--accent-inv);
     border-color: var(--accent-inv);
   }
-
   .video-placeholder :global(iframe) {
     width: 100%;
     height: 100%;
+    max-width: 750px;
+    display: flex;
+    justify-content: center;
+  }
+  .raw-embed-container {
+    width: 100%;
+    height: 100%;
+    max-width: 750px;
+    display: flex;
+    justify-content: center;
+  }
+  .raw-embed-container :global(iframe) {
+    width: 100% !important;
+    border: none;
+  }
+
+  :global([data-theme="dark"]) .post-meta {
+    background: #1bc183;
+    color: #000000;
+    border: none;
+  }
+
+  :global([data-theme="dark"]) .track-title {
+    color: #1beb9e;
   }
 </style>
