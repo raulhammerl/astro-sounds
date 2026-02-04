@@ -170,7 +170,7 @@ import Layout from "../layouts/BaseLayout.astro";
 
 <script>
   import { supabase } from "../lib/supabase";
-  import { getUser } from "../lib/identity";
+  import { promptForIdentity } from "../lib/identity";
 
   const btnYoutube = document.getElementById(
     "btn-youtube",
@@ -217,14 +217,17 @@ import Layout from "../layouts/BaseLayout.astro";
 
   form.onsubmit = async (e) => {
     e.preventDefault();
+
+    const postedBy = promptForIdentity();
+    if (!postedBy) return; // Stop if user cancels
+
     const formData = new FormData(form);
 
     // Explicitly mapping variables with distinct names
     const artistVal = formData.get("artist") as string;
     const titleVal = formData.get("track_title") as string;
     const descVal = formData.get("track_description") as string;
-    const postedBy = getUser() || "ANONYMOUS";
-
+    
     let youtube_url: string | null = null;
     let embed_code: string | null = null;
 
@@ -259,7 +262,6 @@ import Layout from "../layouts/BaseLayout.astro";
     ]);
 
     if (!error) {
-      alert("SUCCESS: DATA_TRANSMITTED");
       window.location.href = "/";
     } else {
       console.error("Supabase Error:", error);
