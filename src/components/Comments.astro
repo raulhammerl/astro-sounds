@@ -198,7 +198,11 @@ const formatDateTime = (dateString) => {
 
 <script>
   import { supabase } from "../lib/supabase";
-  import { getUser, saveUser } from "../lib/identity";
+  import {
+    getUser,
+    getCommentUser,
+    saveCommentUser,
+  } from "../lib/identity";
 
   function initComments() {
     const sections = document.querySelectorAll(".comments-section");
@@ -221,7 +225,8 @@ const formatDateTime = (dateString) => {
       ) as HTMLTextAreaElement;
       const feed = section.querySelector(".comment-feed");
 
-      const existingUser = getUser();
+      // Use comment-specific user, or fall back to global user
+      const existingUser = getCommentUser() || getUser();
       if (existingUser && nameInput) nameInput.value = existingUser;
 
       toggleBtn?.addEventListener("click", () => {
@@ -244,7 +249,7 @@ const formatDateTime = (dateString) => {
           return;
         }
 
-        saveUser(username);
+        saveCommentUser(username); // Save the name for comment context
         submitBtn.textContent = "[SENDING...]";
         submitBtn.disabled = true;
 
