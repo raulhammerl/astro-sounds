@@ -68,7 +68,7 @@ import Layout from "../layouts/BaseLayout.astro";
           placeholder="SYSTEM_NOTES..."></textarea>
       </div>
 
-      <button type="submit" id="submit-btn">[BROADCAST_TO_FEED]</button>
+      <button type="submit" id="submit-btn">[POST_TO_FEED]</button>
     </form>
 
     <div id="status-msg" class="hidden"></div>
@@ -227,7 +227,7 @@ import Layout from "../layouts/BaseLayout.astro";
     const artistVal = formData.get("artist") as string;
     const titleVal = formData.get("track_title") as string;
     const descVal = formData.get("track_description") as string;
-    
+
     let youtube_url: string | null = null;
     let embed_code: string | null = null;
 
