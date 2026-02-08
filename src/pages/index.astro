@@ -4,15 +4,29 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 import PostCard from "../components/PostCard.astro";
 import { supabase } from "../lib/supabase";
 
-// Fetch all posts from your new Supabase table
-const { data: posts, error } = await supabase
+const currentPage = Astro.url.searchParams.get("page")
+  ? parseInt(Astro.url.searchParams.get("page"))
+  : 1;
+const pageSize = 10;
+const from = (currentPage - 1) * pageSize;
+const to = from + pageSize - 1;
+
+// Fetch a paginated list of posts and the total count
+const {
+  data: posts,
+  error,
+  count,
+} = await supabase
   .from("posts")
-  .select("*")
-  .order("created_at", { ascending: false });
+  .select("*", { count: "exact" })
+  .order("created_at", { ascending: false })
+  .range(from, to);
 
 if (error) {
   console.error("Database fetch error:", error);
 }
+
+const totalPages = Math.ceil(count / pageSize);
 ---
 
 <BaseLayout title="sounds">
@@ -35,6 +49,23 @@ if (error) {
         )
       }
     </ul>
+
+    <div class="pagination-controls">
+      {
+        currentPage > 1 && (
+          <a href={`/?page=${currentPage - 1}`} class="pagination-link">
+            [PREV_PAGE]
+          </a>
+        )
+      }
+      {
+        currentPage < totalPages && (
+          <a href={`/?page=${currentPage + 1}`} class="pagination-link">
+            [NEXT_PAGE]
+          </a>
+        )
+      }
+    </div>
   </main>
 </BaseLayout>
 
@@ -58,5 +89,20 @@ if (error) {
     color: #000;
     text-decoration: underline;
     font-weight: 800;
+  }
+  .pagination-controls {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 3rem;
+    font-family: var(--font-mono);
+  }
+  .pagination-link {
+    color: var(--text);
+    text-decoration: none;
+    font-weight: 800;
+  }
+  .pagination-link:hover {
+    text-decoration: underline;
   }
 </style>
