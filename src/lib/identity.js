@@ -1,16 +1,19 @@
 // Constants for storage keys
 const USER_KEY = 'sounds_log_user';
+const COMMENT_USER_KEY = 'sounds_log_comment_user';
 
 // Helper to format names consistently
 const formatName = (name) => name.trim().toUpperCase().substring(0, 15); // Limit length
 
-// Get currently saved user
+// --- Global User Functions ---
+
+// Get currently saved global user
 export function getUser() {
-  if (typeof window === 'undefined') return null; // Server-side safety guard
+  if (typeof window === 'undefined') return null;
   return localStorage.getItem(USER_KEY);
 }
 
-// Save new user
+// Save new global user
 export function saveUser(name) {
   if (!name) return null;
   const formatted = formatName(name);
@@ -18,7 +21,24 @@ export function saveUser(name) {
   return formatted;
 }
 
-// The main function to get or prompt for identity
+// --- Comment-Specific User Functions ---
+
+// Get currently saved comment user
+export function getCommentUser() {
+  if (typeof window === 'undefined') return null;
+  return localStorage.getItem(COMMENT_USER_KEY);
+}
+
+// Save new comment user
+export function saveCommentUser(name) {
+  if (!name) return null;
+  const formatted = formatName(name);
+  localStorage.setItem(COMMENT_USER_KEY, formatted);
+  return formatted;
+}
+
+
+// The main function to get or prompt for global identity
 export function promptForIdentity() {
   let user = getUser();
   
