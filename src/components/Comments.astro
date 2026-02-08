@@ -15,13 +15,15 @@ if (error) {
   comments = [];
 }
 
-const formatTimestamp = (dateString) => {
+const formatDateTime = (dateString) => {
   const date = new Date(dateString);
-  return date.toLocaleTimeString("en-GB", {
+  const datePart = date.toLocaleDateString("en-GB"); // DD/MM/YYYY
+  const timePart = date.toLocaleTimeString("en-GB", {
     hour: "2-digit",
     minute: "2-digit",
     second: "2-digit",
   });
+  return `${datePart} ${timePart}`;
 };
 ---
 
@@ -36,7 +38,7 @@ const formatTimestamp = (dateString) => {
         comments.map((comment) => (
           <div class="comment-entry">
             <div class="comment-meta">
-              {comment.username} - {formatTimestamp(comment.created_at)}
+              {comment.username} - {formatDateTime(comment.created_at)}
             </div>
             <p class="comment-body">{comment.content}</p>
           </div>
@@ -263,14 +265,15 @@ const formatTimestamp = (dateString) => {
 
           if (template) {
             const clone = template.content.cloneNode(true) as DocumentFragment;
-            const time = new Date(data.created_at).toLocaleTimeString("en-GB", {
-              hour: "2-digit",
-              minute: "2-digit",
-              second: "2-digit",
-            });
+            const dateTime = new Date(data.created_at).toLocaleDateString("en-GB") + " " +
+                           new Date(data.created_at).toLocaleTimeString("en-GB", {
+                             hour: "2-digit",
+                             minute: "2-digit",
+                             second: "2-digit",
+                           });
 
             clone.querySelector(".comment-meta").textContent =
-              `${username} - ${time}`;
+              `${username} - ${dateTime}`;
             clone.querySelector(".comment-body").textContent = content;
 
             feed.appendChild(clone);
