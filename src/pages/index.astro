@@ -27,6 +27,16 @@ if (error) {
 }
 
 const totalPages = Math.ceil(count / pageSize);
+
+// Generate page numbers for pagination control
+const pagesToShow = 2; // Number of pages to show before and after current page
+let startPage = Math.max(1, currentPage - pagesToShow);
+let endPage = Math.min(totalPages, currentPage + pagesToShow);
+
+const pageNumbers = [];
+for (let i = startPage; i <= endPage; i++) {
+  pageNumbers.push(i);
+}
 ---
 
 <BaseLayout title="sounds">
@@ -53,15 +63,43 @@ const totalPages = Math.ceil(count / pageSize);
     <div class="pagination-controls">
       {
         currentPage > 1 && (
+          <a href="/?page=1" class="pagination-link">
+            [FIRST]
+          </a>
+        )
+      }
+      {
+        currentPage > 1 && (
           <a href={`/?page=${currentPage - 1}`} class="pagination-link">
-            [PREV_PAGE]
+            [PREV]
+          </a>
+        )
+      }
+
+      {startPage > 1 && <span class="pagination-ellipsis">...</span>}
+
+      {pageNumbers.map((p) => (
+        <a
+          href={`/?page=${p}`}
+          class:list={["pagination-link", { active: p === currentPage }]}
+        >
+          {p}
+        </a>
+      ))}
+
+      {endPage < totalPages && <span class="pagination-ellipsis">...</span>}
+
+      {
+        currentPage < totalPages && (
+          <a href={`/?page=${currentPage + 1}`} class="pagination-link">
+            [NEXT]
           </a>
         )
       }
       {
         currentPage < totalPages && (
-          <a href={`/?page=${currentPage + 1}`} class="pagination-link">
-            [NEXT_PAGE]
+          <a href={`/?page=${totalPages}`} class="pagination-link">
+            [LAST]
           </a>
         )
       }
@@ -93,16 +131,27 @@ const totalPages = Math.ceil(count / pageSize);
   .pagination-controls {
     display: flex;
     justify-content: center;
-    gap: 1rem;
+    gap: 0.5rem;
     margin-top: 3rem;
     font-family: var(--font-mono);
+    align-items: center;
   }
   .pagination-link {
     color: var(--text);
     text-decoration: none;
     font-weight: 800;
+    padding: 0.25rem 0.5rem;
+    border: 1px solid transparent;
   }
   .pagination-link:hover {
     text-decoration: underline;
+  }
+  .pagination-link.active {
+    border: 1px solid var(--text);
+    background-color: var(--text);
+    color: var(--bg);
+  }
+  .pagination-ellipsis {
+    color: var(--text-muted);
   }
 </style>
