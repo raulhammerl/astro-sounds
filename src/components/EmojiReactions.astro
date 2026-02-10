@@ -116,7 +116,7 @@ const existingReactionEntries = Object.entries(groupedReactions);
     justify-content: center;
   }
   .prefix {
-    color: #888;
+    color: var(--text-muted);
     font-weight: 800;
     font-size: 0.75rem;
   }
@@ -130,13 +130,13 @@ const existingReactionEntries = Object.entries(groupedReactions);
     cursor: help;
   }
   .reaction-badge {
-    border: 1px solid #bcbcbc;
+    border: 1px solid var(--comment-border);
     display: flex;
     gap: 4px;
     padding: 1px 5px;
     font-size: 0.75rem;
-    color: #666;
-    background: #fff;
+    color: var(--text-muted);
+    background: var(--bg);
     align-items: center;
   }
   .reaction-badge .emoji {
@@ -145,8 +145,8 @@ const existingReactionEntries = Object.entries(groupedReactions);
     transition: filter 0.2s ease;
   }
   .reaction-item:hover .reaction-badge {
-    border-color: #000;
-    color: #000;
+    border-color: var(--text);
+    color: var(--text);
   }
   .reaction-item:hover .emoji {
     filter: grayscale(0%);
@@ -156,8 +156,8 @@ const existingReactionEntries = Object.entries(groupedReactions);
     bottom: 130%;
     left: 50%;
     transform: translateX(-50%);
-    background: #000;
-    color: #fff;
+    background: var(--accent);
+    color: var(--accent-inv);
     padding: 3px 6px;
     font-size: 0.65rem;
     white-space: nowrap;
@@ -184,13 +184,13 @@ const existingReactionEntries = Object.entries(groupedReactions);
     background: transparent;
     border: none;
     cursor: pointer;
-    color: #bcbcbc;
+    color: var(--comment-border);
     font-weight: 800;
     font-family: var(--font-mono);
     padding: 0 4px;
   }
   .add-btn:hover {
-    color: #000;
+    color: var(--text);
   }
   .emoji-menu {
     position: absolute;
@@ -210,13 +210,13 @@ const existingReactionEntries = Object.entries(groupedReactions);
     visibility: visible;
   }
   .menu-inner {
-    background: #fff;
-    border: 1px solid #000;
+    background: var(--bg);
+    border: 1px solid var(--text);
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 2px;
     padding: 4px;
-    box-shadow: 3px 3px 0px #bcbcbc;
+    box-shadow: 3px 3px 0px var(--comment-border);
   }
   .menu-item {
     background: transparent;
@@ -227,7 +227,7 @@ const existingReactionEntries = Object.entries(groupedReactions);
     transition: background 0.1s;
   }
   .menu-item:hover {
-    background: #eee;
+    background: var(--comment-border);
   }
 </style>
 
