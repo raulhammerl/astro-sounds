@@ -26,7 +26,6 @@ const availableEmojis = [
   "❤️",
   "💙",
   "💛",
-  "💚",
 ];
 
 // --- 1. Server-Side Data Fetching ---
@@ -84,6 +83,9 @@ const existingReactionEntries = Object.entries(groupedReactions);
               </button>
             ))
           }
+          <button class="menu-item" id="custom-emoji-btn" type="button"
+            >...</button
+          >
         </div>
       </div>
     </div>
@@ -101,6 +103,10 @@ const existingReactionEntries = Object.entries(groupedReactions);
 </template>
 
 <style>
+  #custom-emoji-btn {
+    font-size: 0.8rem;
+    font-weight: 800;
+  }
   .reaction-wrapper {
     margin: 1rem 0;
     font-family: var(--font-mono);
@@ -244,7 +250,69 @@ const existingReactionEntries = Object.entries(groupedReactions);
       const menuItems = module.querySelectorAll(".menu-item");
       const reactionList = module.querySelector(".reaction-list");
 
+      const customEmojiBtn = module.querySelector("#custom-emoji-btn");
+
+      customEmojiBtn.addEventListener("click", async (e) => {
+        e.stopPropagation();
+        const emoji = prompt("Enter an emoji:");
+
+        console.log("Emoji entered:", emoji);
+        const emojiRegex =
+          /^(\p{Emoji_Presentation}|\p{Extended_Pictographic})$/u;
+        console.log("Regex test result:", emojiRegex.test(emoji));
+
+        if (emoji && emojiRegex.test(emoji)) {
+          const username = promptForIdentity();
+          if (!username) return;
+
+          const { error } = await supabase
+            .from("reactions")
+            .insert([{ slug, emoji, username }]);
+
+          if (error) {
+            if (error.code !== "23505") {
+              console.error("Database Error:", error);
+              alert("SYSTEM_ERROR: Could not save reaction.");
+            }
+          } else {
+            let existingBadge = module.querySelector(
+              `.reaction-item[data-emoji-type="${emoji}"]`,
+            );
+
+            if (existingBadge) {
+              const countEl = existingBadge.querySelector(".count");
+              const currentCount = parseInt(countEl.textContent || "0");
+              countEl.textContent = (currentCount + 1)
+                .toString()
+                .padStart(2, "0");
+              const tooltipEl = existingBadge.querySelector(".name-tooltip");
+              if (tooltipEl) {
+                tooltipEl.textContent += `, ${username}`;
+              }
+            } else if (template && reactionList) {
+              const clone = template.content.cloneNode(true);
+              const itemEl = clone.querySelector(".reaction-item");
+              const emojiEl = clone.querySelector(".emoji");
+              const countEl = clone.querySelector(".count");
+              const tooltipEl = clone.querySelector(".name-tooltip");
+
+              itemEl.setAttribute("data-emoji-type", emoji);
+              emojiEl.textContent = emoji;
+              countEl.textContent = "01";
+              tooltipEl.textContent = username;
+
+              reactionList.appendChild(clone);
+            }
+          }
+        } else {
+          alert("Please enter a single emoji.");
+        }
+      });
+
       menuItems.forEach((item) => {
+        if (item.id === "custom-emoji-btn") {
+          return;
+        }
         const newItem = item.cloneNode(true);
         item.parentNode.replaceChild(newItem, item);
 
