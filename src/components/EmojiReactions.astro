@@ -256,12 +256,13 @@ const existingReactionEntries = Object.entries(groupedReactions);
         e.stopPropagation();
         const emoji = prompt("Enter an emoji:");
 
-        console.log("Emoji entered:", emoji);
-        const emojiRegex =
-          /^(\p{Emoji_Presentation}|\p{Extended_Pictographic})$/u;
-        console.log("Regex test result:", emojiRegex.test(emoji));
+        if (!emoji) return;
 
-        if (emoji && emojiRegex.test(emoji)) {
+        console.log("Emoji entered:", emoji);
+        const emojiRegex = /\p{Extended_Pictographic}/ug;
+        const matches = emoji.match(emojiRegex);
+
+        if (matches && matches.length === 1) {
           const username = promptForIdentity();
           if (!username) return;
 
