@@ -1,0 +1,126 @@
+---
+const { currentPage, totalPages, url } = Astro.props;
+
+const renderPages = () => {
+  const pages = [];
+  const maxPagesToShow = 5;
+
+  if (totalPages <= maxPagesToShow) {
+    for (let i = 1; i <= totalPages; i++) {
+      pages.push(i);
+    }
+  } else {
+    pages.push(1);
+    if (currentPage > 3) {
+      pages.push("...");
+    }
+
+    let startPage = Math.max(2, currentPage - 1);
+    let endPage = Math.min(totalPages - 1, currentPage + 1);
+
+    if (currentPage <= 3) {
+      startPage = 2;
+      endPage = 4;
+    }
+
+    if (currentPage >= totalPages - 2) {
+      startPage = totalPages - 3;
+      endPage = totalPages - 1;
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(i);
+    }
+
+    if (currentPage < totalPages - 2) {
+      pages.push("...");
+    }
+    pages.push(totalPages);
+  }
+  return pages;
+};
+
+const pages = renderPages();
+---
+
+<div class="pagination-controls">
+  {currentPage > 1 && (
+    <a href={`${url}?page=${currentPage - 1}`} class="pagination-link">
+      [PREV]
+    </a>
+  )}
+  {pages.map(page => (
+    <>
+      {page === "..." ? (
+        <span class="ellipsis">...</span>
+      ) : (
+        <a href={`${url}?page=${page}`} class:list={["pagination-link", { active: page === currentPage }]}>
+          {page}
+        </a>
+      )}
+    </>
+  ))}
+  {currentPage < totalPages && (
+    <a href={`${url}?page=${currentPage + 1}`} class="pagination-link">
+      [NEXT]
+    </a>
+  )}
+</div>
+<div id="jump-to-page-box" style="display: none;">
+  <input type="number" id="page-input" min="1" max={totalPages} />
+  <button id="jump-btn">Go</button>
+</div>
+
+<style>
+  .pagination-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: var(--font-mono);
+    margin-top: 3rem;
+  }
+  .pagination-link, .ellipsis {
+    color: var(--text);
+    text-decoration: none;
+    font-weight: 800;
+    font-size: 0.8rem;
+    padding: 0.2rem 0.5rem;
+  }
+  .pagination-link.active {
+    background-color: var(--accent);
+    color: var(--accent-inv);
+  }
+  .pagination-link:hover {
+    background-color: var(--accent);
+    color: var(--accent-inv);
+  }
+  .ellipsis {
+    cursor: pointer;
+  }
+  #jump-to-page-box {
+    position: absolute;
+    background-color: var(--bg);
+    border: 1px solid var(--text);
+    padding: 10px;
+    box-shadow: 3px 3px 0px var(--comment-border);
+  }
+</style>
+
+<script>
+  document.querySelectorAll('.ellipsis').forEach(ellipsis => {
+    ellipsis.addEventListener('click', (e) => {
+      const jumpBox = document.getElementById('jump-to-page-box');
+      jumpBox.style.display = 'block';
+      jumpBox.style.left = `${e.pageX}px`;
+      jumpBox.style.top = `${e.pageY}px`;
+    });
+  });
+
+  document.getElementById('jump-btn').addEventListener('click', () => {
+    const page = document.getElementById('page-input').value;
+    if (page) {
+      window.location.href = `${Astro.props.url}?page=${page}`;
+    }
+  });
+</script>
