@@ -17,6 +17,7 @@
   --accent-inv: #ffffff;
   --comment-border: #eeeeee;
   --placeholder-color: #888888;
+  --add-btn-color: rgb(188, 188, 188);
 }
 
 [data-theme='dark'] {
@@ -29,6 +30,7 @@
   --accent: #ffffff;
   --accent-inv: #1a1a1a;
   --comment-border: #334155;
+  --add-btn-color: rgb(188, 188, 188);
   /* Lighter placeholder for dark mode legibility */
   --placeholder-color: #94a3b8;
 }
