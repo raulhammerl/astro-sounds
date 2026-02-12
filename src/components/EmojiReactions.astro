@@ -26,7 +26,6 @@ const availableEmojis = [
   "❤️",
   "💙",
   "💛",
-  "💚",
 ];
 
 // --- 1. Server-Side Data Fetching ---
@@ -84,6 +83,9 @@ const existingReactionEntries = Object.entries(groupedReactions);
               </button>
             ))
           }
+          <button class="menu-item" id="custom-emoji-btn" type="button"
+            >...</button
+          >
         </div>
       </div>
     </div>
@@ -101,6 +103,10 @@ const existingReactionEntries = Object.entries(groupedReactions);
 </template>
 
 <style>
+  #custom-emoji-btn {
+    font-size: 0.8rem;
+    font-weight: 800;
+  }
   .reaction-wrapper {
     margin: 1rem 0;
     font-family: var(--font-mono);
@@ -116,7 +122,7 @@ const existingReactionEntries = Object.entries(groupedReactions);
     justify-content: center;
   }
   .prefix {
-    color: #888;
+    color: var(--text-muted);
     font-weight: 800;
     font-size: 0.75rem;
   }
@@ -130,13 +136,13 @@ const existingReactionEntries = Object.entries(groupedReactions);
     cursor: help;
   }
   .reaction-badge {
-    border: 1px solid #bcbcbc;
+    border: 1px solid var(--comment-border);
     display: flex;
     gap: 4px;
     padding: 1px 5px;
     font-size: 0.75rem;
-    color: #666;
-    background: #fff;
+    color: var(--text-muted);
+    background: var(--bg);
     align-items: center;
   }
   .reaction-badge .emoji {
@@ -145,8 +151,8 @@ const existingReactionEntries = Object.entries(groupedReactions);
     transition: filter 0.2s ease;
   }
   .reaction-item:hover .reaction-badge {
-    border-color: #000;
-    color: #000;
+    border-color: var(--text);
+    color: var(--text);
   }
   .reaction-item:hover .emoji {
     filter: grayscale(0%);
@@ -156,8 +162,8 @@ const existingReactionEntries = Object.entries(groupedReactions);
     bottom: 130%;
     left: 50%;
     transform: translateX(-50%);
-    background: #000;
-    color: #fff;
+    background: var(--accent);
+    color: var(--accent-inv);
     padding: 3px 6px;
     font-size: 0.65rem;
     white-space: nowrap;
@@ -184,13 +190,13 @@ const existingReactionEntries = Object.entries(groupedReactions);
     background: transparent;
     border: none;
     cursor: pointer;
-    color: #bcbcbc;
+    color: var(--add-btn-color);
     font-weight: 800;
     font-family: var(--font-mono);
     padding: 0 4px;
   }
   .add-btn:hover {
-    color: #000;
+    color: var(--text);
   }
   .emoji-menu {
     position: absolute;
@@ -210,13 +216,13 @@ const existingReactionEntries = Object.entries(groupedReactions);
     visibility: visible;
   }
   .menu-inner {
-    background: #fff;
-    border: 1px solid #000;
+    background: var(--bg);
+    border: 1px solid var(--text);
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 2px;
     padding: 4px;
-    box-shadow: 3px 3px 0px #bcbcbc;
+    box-shadow: 3px 3px 0px var(--comment-border);
   }
   .menu-item {
     background: transparent;
@@ -227,7 +233,7 @@ const existingReactionEntries = Object.entries(groupedReactions);
     transition: background 0.1s;
   }
   .menu-item:hover {
-    background: #eee;
+    background: var(--comment-border);
   }
 </style>
 
@@ -244,7 +250,70 @@ const existingReactionEntries = Object.entries(groupedReactions);
       const menuItems = module.querySelectorAll(".menu-item");
       const reactionList = module.querySelector(".reaction-list");
 
+      const customEmojiBtn = module.querySelector("#custom-emoji-btn");
+
+      customEmojiBtn.addEventListener("click", async (e) => {
+        e.stopPropagation();
+        const emoji = prompt("Enter an emoji:");
+
+        if (!emoji) return;
+
+        console.log("Emoji entered:", emoji);
+        const emojiRegex = /\p{Extended_Pictographic}/ug;
+        const matches = emoji.match(emojiRegex);
+
+        if (matches && matches.length === 1) {
+          const username = promptForIdentity();
+          if (!username) return;
+
+          const { error } = await supabase
+            .from("reactions")
+            .insert([{ slug, emoji, username }]);
+
+          if (error) {
+            if (error.code !== "23505") {
+              console.error("Database Error:", error);
+              alert("SYSTEM_ERROR: Could not save reaction.");
+            }
+          } else {
+            let existingBadge = module.querySelector(
+              `.reaction-item[data-emoji-type="${emoji}"]`,
+            );
+
+            if (existingBadge) {
+              const countEl = existingBadge.querySelector(".count");
+              const currentCount = parseInt(countEl.textContent || "0");
+              countEl.textContent = (currentCount + 1)
+                .toString()
+                .padStart(2, "0");
+              const tooltipEl = existingBadge.querySelector(".name-tooltip");
+              if (tooltipEl) {
+                tooltipEl.textContent += `, ${username}`;
+              }
+            } else if (template && reactionList) {
+              const clone = template.content.cloneNode(true);
+              const itemEl = clone.querySelector(".reaction-item");
+              const emojiEl = clone.querySelector(".emoji");
+              const countEl = clone.querySelector(".count");
+              const tooltipEl = clone.querySelector(".name-tooltip");
+
+              itemEl.setAttribute("data-emoji-type", emoji);
+              emojiEl.textContent = emoji;
+              countEl.textContent = "01";
+              tooltipEl.textContent = username;
+
+              reactionList.appendChild(clone);
+            }
+          }
+        } else {
+          alert("Please enter a single emoji.");
+        }
+      });
+
       menuItems.forEach((item) => {
+        if (item.id === "custom-emoji-btn") {
+          return;
+        }
         const newItem = item.cloneNode(true);
         item.parentNode.replaceChild(newItem, item);
 
