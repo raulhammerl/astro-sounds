@@ -254,15 +254,21 @@ const existingReactionEntries = Object.entries(groupedReactions);
 
       customEmojiBtn.addEventListener("click", async (e) => {
         e.stopPropagation();
-        const emoji = prompt("Enter an emoji:");
+        const inputEmoji = prompt("Enter an emoji:");
 
-        if (!emoji) return;
+        if (!inputEmoji) return;
 
-        console.log("Emoji entered:", emoji);
-        const emojiRegex = /\p{Extended_Pictographic}/ug;
-        const matches = emoji.match(emojiRegex);
+        console.log("Emoji entered:", inputEmoji);
+        
+        // Use Intl.Segmenter to handle multi-character emojis (graphemes)
+        const segmenter = new Intl.Segmenter("en", { granularity: "grapheme" });
+        const segments = Array.from(segmenter.segment(inputEmoji.trim()));
+        const emoji = segments.length === 1 ? segments[0].segment : null;
+        
+        // Simple regex to check if the segment is likely an emoji
+        const isEmoji = emoji && /(\p{Emoji_Presentation}|\p{Emoji}\uFE0F|\p{Emoji_Modifier_Base}|\p{Extended_Pictographic})/u.test(emoji);
 
-        if (matches && matches.length === 1) {
+        if (isEmoji) {
           const username = promptForIdentity();
           if (!username) return;
 
