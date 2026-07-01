@@ -2,6 +2,7 @@
 import BaseLayout from "../layouts/BaseLayout.astro";
 import PostCard from "../components/PostCard.astro";
 import { supabase } from "../lib/supabase";
+import Fuse from "fuse.js";
 
 const searchTerm = Astro.url.searchParams.get("q") || "";
 let posts = [];
@@ -11,12 +12,18 @@ if (hasSearched) {
   const { data, error } = await supabase
     .from("posts")
     .select("*")
-    .or(
-      `artist.ilike.%${searchTerm}%,title.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`,
-    )
     .order("created_at", { ascending: false });
 
-  if (!error) posts = data;
+  if (!error && data) {
+    const fuse = new Fuse(data, {
+      keys: ["artist", "title", "description", "posted_by"],
+      threshold: 0.4,
+      ignoreLocation: true,
+    });
+    
+    const results = fuse.search(searchTerm);
+    posts = results.map((result) => result.item);
+  }
 }
 ---
 
@@ -68,7 +75,7 @@ if (hasSearched) {
         ) : (
           <div class="pre-search">
             <p class="hint">
-              Search by artist, track name, or description keywords.
+              Search by artist, track name, author, or description keywords.
             </p>
           </div>
         )
