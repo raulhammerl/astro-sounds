@@ -1,22 +1,44 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
 import PostCard from "../components/PostCard.astro";
+import Pagination from "../components/Pagination.astro";
 import { supabase } from "../lib/supabase";
+import Fuse from "fuse.js";
 
 const searchTerm = Astro.url.searchParams.get("q") || "";
+const currentPage = Astro.url.searchParams.get("page")
+  ? parseInt(Astro.url.searchParams.get("page"))
+  : 1;
+const pageSize = 10;
+
 let posts = [];
 let hasSearched = searchTerm.length > 0;
+let totalPages = 0;
+let totalMatches = 0;
 
 if (hasSearched) {
   const { data, error } = await supabase
     .from("posts")
     .select("*")
-    .or(
-      `artist.ilike.%${searchTerm}%,title.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`,
-    )
     .order("created_at", { ascending: false });
 
-  if (!error) posts = data;
+  if (!error && data) {
+    const fuse = new Fuse(data, {
+      keys: ["artist", "title", "description", "posted_by"],
+      threshold: 0.4,
+      ignoreLocation: true,
+    });
+    
+    const results = fuse.search(searchTerm);
+    const allMatches = results.map((result) => result.item);
+    
+    totalMatches = allMatches.length;
+    totalPages = Math.ceil(totalMatches / pageSize);
+    
+    const from = (currentPage - 1) * pageSize;
+    const to = from + pageSize;
+    posts = allMatches.slice(from, to);
+  }
 }
 ---
 
@@ -45,7 +67,7 @@ if (hasSearched) {
         hasSearched ? (
           <>
             <div class="status-bar">
-              FOUND: {posts.length} MATCHES_FOR "{searchTerm.toUpperCase()}"
+              FOUND: {totalMatches} MATCHES_FOR "{searchTerm.toUpperCase()}"
             </div>
 
             <ul class="posts-listing">
@@ -64,11 +86,19 @@ if (hasSearched) {
                 </a>
               </div>
             )}
+
+            {totalPages > 1 && (
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                url={`/search?q=${encodeURIComponent(searchTerm)}`}
+              />
+            )}
           </>
         ) : (
           <div class="pre-search">
             <p class="hint">
-              Search by artist, track name, or description keywords.
+              Search by artist, track name, author, or description keywords.
             </p>
           </div>
         )
